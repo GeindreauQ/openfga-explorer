@@ -1,0 +1,31 @@
+# Exemple : IP allowlist via condition.
+#
+# Démontre : condition CEL avec type `ipaddress`, opérateur `in_cidr`
+# natif OpenFGA, syntaxe `[type with cond, type#rel with cond]`.
+#
+# Note : le parser officiel ANTLR n'accepte pas le `with` factorisé
+# sur toute la liste (`[a, b] with cond`). Il faut annoter chaque
+# élément individuellement.
+#
+# Inspiré du sample store officiel openfga/sample-stores/ip-based-access.
+
+model
+  schema 1.1
+
+type user
+
+type network
+  relations
+    define member: [user]
+
+type document
+  relations
+    # Le viewer doit être dans le réseau autorisé. La condition
+    # `from_corporate_network` est portée par chaque élément.
+    define viewer: [user with from_corporate_network, network#member with from_corporate_network]
+
+# `client_ip_address` est fourni à chaque Check via le context.
+# `cidr` est stocké dans le tuple au moment du Write (ex: "192.168.0.0/24").
+condition from_corporate_network(client_ip_address: ipaddress, cidr: string) {
+  client_ip_address.in_cidr(cidr)
+}

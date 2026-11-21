@@ -1,0 +1,59 @@
+# Dependabot configuration. Surveille Go modules et packages npm, et
+# crée des PRs automatiques avec des mises à jour mineures / patchs.
+
+version: 2
+updates:
+  - package-ecosystem: "gomod"
+    directory: "/src/server"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "go"
+    commit-message:
+      prefix: "deps(go)"
+    # Major upgrades sont trop disruptifs pour une PR auto.
+    ignore:
+      - dependency-type: "all"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "npm"
+    directory: "/tests"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "tests"
+    commit-message:
+      prefix: "deps(tests)"
+    ignore:
+      - dependency-type: "all"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "deps(docker)"
+    # On utilise l'image Pinée dans docker-compose.yml (cf. PR4) ; le
+    # bot peut proposer les patchs.
+    ignore:
+      - dependency-name: "openfga/openfga"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "deps(ci)"

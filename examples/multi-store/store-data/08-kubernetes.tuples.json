@@ -1,0 +1,11 @@
+{
+  "tuple_keys": [
+    { "user": "group:platform-admins#member", "relation": "admin", "object": "cluster:prod" },
+    { "user": "group:viewers#member", "relation": "viewer", "object": "cluster:prod" },
+    { "user": "project:billing", "relation": "project", "object": "namespace:billing" },
+    { "user": "project:billing", "relation": "project", "object": "namespace:billing-workers" },
+    { "user": "group:billing-team#member", "relation": "editor", "object": "project:billing" },
+    { "user": "user:carol", "relation": "admin", "object": "namespace:billing" },
+    { "user": "user:dave", "relation": "viewer", "object": "namespace:monitoring" }
+  ]
+}

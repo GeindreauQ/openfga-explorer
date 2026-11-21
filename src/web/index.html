@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenFGA Explorer</title>
+  <!-- Dépendances tierces servies depuis ./vendor/ (DSL parser, graph,
+       icônes). Procédure d'update : voir scripts/vendor.sh. -->
+  <!-- Thème résolu avant le premier rendu (cf. js/lib/color-scheme.js). -->
+  <script>try{var p=localStorage.getItem('openfga-explorer.theme')||'system';document.documentElement.dataset.theme=p==='system'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p}catch(e){document.documentElement.dataset.theme='light'}</script>
+  <script type="importmap">
+  {
+    "imports": {
+      "@openfga/syntax-transformer": "./vendor/openfga-syntax-transformer.mjs"
+    }
+  }
+  </script>
+  <link rel="stylesheet" href="./vendor/tabler-icons/tabler-icons.min.css" />
+  <link rel="stylesheet" href="./css/tokens.css" />
+  <link rel="stylesheet" href="./css/base.css" />
+  <link rel="stylesheet" href="./css/shell.css" />
+  <link rel="stylesheet" href="./css/components.css" />
+  <link rel="stylesheet" href="./css/home.css" />
+  <link rel="stylesheet" href="./css/tuples.css" />
+  <link rel="stylesheet" href="./css/graph.css" />
+  <link rel="stylesheet" href="./css/panels.css" />
+  <link rel="stylesheet" href="./css/pages.css" />
+  <link rel="stylesheet" href="./css/dsl.css" />
+  <link rel="stylesheet" href="./css/audit.css" />
+  <link rel="stylesheet" href="./css/io.css" />
+  <link rel="stylesheet" href="./css/assertions.css" />
+  <link rel="stylesheet" href="./css/access.css" />
+  <link rel="stylesheet" href="./css/vendor-cytoscape.css" id="__________cytoscape_stylesheet" />
+  <link rel="icon" href="./favicon.ico" />
+</head>
+<body>
+<a class="skip-link" href="#content">Aller au contenu</a>
+<div class="app">
+
+  <!-- Navigation principale. L'entrée active suit la page affichée
+       (classes de <body>, cf. controllers/shell.js). -->
+  <aside class="sidebar" id="sidebar" aria-label="Navigation principale">
+    <div class="sidebar-brand">
+      <span class="logo-mark" aria-hidden="true"><i class="ti ti-shield-lock"></i></span>
+      <span class="app-name">OpenFGA <span>Explorer</span></span>
+    </div>
+    <nav class="sidebar-nav" aria-label="Pages">
+      <a class="nav-item" href="?" data-nav="home" id="btn-home"><i class="ti ti-home" aria-hidden="true"></i><span>Accueil</span></a>
+      <p class="nav-section">Données</p>
+      <a class="nav-item" href="?tile=manage_tuple" data-nav="manage_tuple"><i class="ti ti-layout-grid" aria-hidden="true"></i><span>Tuples</span></a>
+      <a class="nav-item" href="?tile=import_export" data-nav="import_export"><i class="ti ti-transfer" aria-hidden="true"></i><span>Import / Export</span></a>
+      <p class="nav-section">Accès</p>
+      <a class="nav-item" href="?tile=access" data-nav="access"><i class="ti ti-users-group" aria-hidden="true"></i><span>Qui a accès</span></a>
+      <a class="nav-item" href="?tile=audit" data-nav="audit"><i class="ti ti-shield-check" aria-hidden="true"></i><span>Audit</span></a>
+      <p class="nav-section">Modèle</p>
+      <a class="nav-item" href="?tile=admin_dsl" data-nav="admin_dsl"><i class="ti ti-code" aria-hidden="true"></i><span>Éditeur DSL</span></a>
+      <a class="nav-item" href="?tile=assertions" data-nav="assertions"><i class="ti ti-test-pipe" aria-hidden="true"></i><span>Assertions</span></a>
+      <button class="nav-item" type="button" id="btn-open-model"><i class="ti ti-sitemap" aria-hidden="true"></i><span>Résumé du modèle</span></button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="theme-switch" role="radiogroup" aria-label="Thème">
+        <button type="button" role="radio" data-theme-choice="system" title="Suivre le système" aria-label="Thème du système"><i class="ti ti-device-desktop" aria-hidden="true"></i></button>
+        <button type="button" role="radio" data-theme-choice="light" title="Clair" aria-label="Thème clair"><i class="ti ti-sun" aria-hidden="true"></i></button>
+        <button type="button" role="radio" data-theme-choice="dark" title="Sombre" aria-label="Thème sombre"><i class="ti ti-moon" aria-hidden="true"></i></button>
+      </div>
+      <!-- Utilisateur connecté (masqué quand l'auth est désactivée). -->
+      <div class="user-chip" id="user-chip" hidden>
+        <i class="ti ti-user-circle" aria-hidden="true"></i>
+        <span class="user-chip-text">
+          <span class="user-chip-name" id="user-name"></span>
+          <span class="user-chip-role" id="user-role" hidden>lecture seule</span>
+        </span>
+        <button type="button" class="btn ghost icon user-chip-logout" id="btn-logout" title="Se déconnecter" aria-label="Se déconnecter">
+          <i class="ti ti-logout" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-scrim" id="sidebar-scrim" hidden></div>
+
+  <div class="workspace">
+    <header class="topbar">
+      <button class="btn ghost icon topbar-menu" type="button" id="btn-sidebar" aria-label="Menu" aria-controls="sidebar" aria-expanded="false">
+        <i class="ti ti-menu-2" aria-hidden="true"></i>
+      </button>
+      <!-- Store actif : liste de GET /api/stores, bascule à chaud. -->
+      <label class="store-selector" id="store-selector">
+        <i class="ti ti-database" aria-hidden="true"></i>
+        <span class="sr-only">Store OpenFGA actif</span>
+        <select id="store-select">
+          <option value="">— aucun store —</option>
+        </select>
+      </label>
+      <button class="conn-indicator" type="button" id="btn-toggle-config" data-indicator title="État de la connexion" aria-controls="config-panel" aria-expanded="false">
+        <span class="status-dot" id="conn-dot" aria-hidden="true"></span>
+        <span id="store-label">…</span>
+      </button>
+      <span class="topbar-spacer"></span>
+      <button class="btn ghost" id="btn-share" type="button" title="Copier le lien de cette vue">
+        <i class="ti ti-link" aria-hidden="true"></i><span class="topbar-label">Partager</span>
+      </button>
+    </header>
+    <main id="content" class="content" tabindex="-1">
+
+  <!-- Connection info panel (lecture seule : la connexion est gérée par le backend) -->
+  <div class="config-panel" id="config-panel">
+    <h3><i class="ti ti-plug-connected icon-gap" aria-hidden="true"></i>Information de connexion</h3>
+    <div class="form-group">
+      <label>État</label>
+      <div class="tuple-row" id="conn-status"><span class="text-muted">Vérification…</span></div>
+    </div>
+    <div class="form-group">
+      <label>URL de l'API</label>
+      <div class="tuple-row" id="conn-url"><span class="text-muted">—</span></div>
+    </div>
+    <div class="form-group">
+      <label>Stores disponibles</label>
+      <div class="tuple-row" id="conn-stores"><span class="text-muted">—</span></div>
+    </div>
+    <div class="form-group">
+      <label>Store actif</label>
+      <div class="tuple-row" id="conn-store"><span class="text-muted">—</span></div>
+    </div>
+    <div class="separator"></div>
+    <p class="conn-note">
+      Le serveur relaie les requêtes vers OpenFGA via
+      <code class="conn-code">POST /stores/{id}/read</code>.
+      Le store actif est sélectionnable depuis la toolbar — l'application
+      liste tous les stores présents sur l'instance OpenFGA et bascule à chaud.
+    </p>
+  </div>
+
+  <!-- Accueil : store actif, chiffres, tâches courantes, répartition. -->
+  <section class="home-dashboard" id="home-dashboard" hidden aria-labelledby="home-title">
+    <div class="home">
+      <header class="home-head">
+        <div class="home-head-text">
+          <p class="home-eyebrow">Store actif</p>
+          <h1 id="home-title">—</h1>
+          <p class="home-sub" id="home-sub"></p>
+        </div>
+        <div class="home-head-actions">
+          <button class="btn" id="home-quick-refresh" type="button"><i class="ti ti-refresh" aria-hidden="true"></i> Recharger</button>
+          <button class="btn primary" id="home-quick-add" data-requires-write type="button"><i class="ti ti-plus" aria-hidden="true"></i> Ajouter un tuple</button>
+        </div>
+      </header>
+
+      <dl class="home-stats" aria-label="Chiffres du store">
+        <div class="home-stat"><dt>Tuples</dt><dd id="home-stat-tuples">—</dd></div>
+        <div class="home-stat"><dt>Types</dt><dd id="home-stat-types">—</dd></div>
+        <div class="home-stat"><dt>Relations</dt><dd id="home-stat-relations">—</dd></div>
+        <div class="home-stat"><dt>Stores</dt><dd id="home-stat-stores">—</dd></div>
+      </dl>
+
+      <section class="home-section" aria-labelledby="home-tasks-title">
+        <h2 id="home-tasks-title">Que voulez-vous faire ?</h2>
+        <div class="home-tasks" id="home-tiles">
+        <button class="home-tile" data-tile="access" type="button">
+          <i class="ti ti-users-group" aria-hidden="true"></i>
+          <span class="home-tile-title">Qui a accès à… ?</span>
+          <span class="home-tile-desc">Utilisateurs et groupes ayant un droit sur un objet, et par quel chemin.</span>
+        </button>
+        <button class="home-tile" data-tile="access" type="button" data-access-tab="kubectl" id="home-task-kubectl" hidden>
+          <i class="ti ti-terminal-2" aria-hidden="true"></i>
+          <span class="home-tile-title">Simuler kubectl</span>
+          <span class="home-tile-desc">Rejouer un <code>kubectl auth can-i</code> comme le webhook et comprendre la réponse.</span>
+        </button>
+        <button class="home-tile" data-tile="access" type="button" data-access-tab="grant" data-requires-write>
+          <i class="ti ti-user-plus" aria-hidden="true"></i>
+          <span class="home-tile-title">Attribuer un rôle</span>
+          <span class="home-tile-desc">Donner un rôle sur un objet à un utilisateur ou un groupe.</span>
+        </button>
+        <button class="home-tile" data-tile="audit" type="button">
+          <i class="ti ti-shield-check" aria-hidden="true"></i>
+          <span class="home-tile-title">Vérifier un accès</span>
+          <span class="home-tile-desc">Check, ListObjects et ListUsers avec le chemin de résolution.</span>
+        </button>
+        <button class="home-tile" data-tile="manage_tuple" type="button">
+          <i class="ti ti-layout-grid" aria-hidden="true"></i>
+          <span class="home-tile-title">Parcourir les tuples</span>
+          <span class="home-tile-desc">Cartes et graphe, filtres, ajout et suppression.</span>
+        </button>
+        <button class="home-tile" data-tile="admin_dsl" type="button">
+          <i class="ti ti-code" aria-hidden="true"></i>
+          <span class="home-tile-title">Éditer le modèle</span>
+          <span class="home-tile-desc">Éditeur DSL avec aperçu graphique, lint et historique.</span>
+        </button>
+        <button class="home-tile" data-tile="assertions" type="button">
+          <i class="ti ti-test-pipe" aria-hidden="true"></i>
+          <span class="home-tile-title">Tester le modèle</span>
+          <span class="home-tile-desc">Assertions du modèle, exécutées en lot.</span>
+        </button>
+        <button class="home-tile" data-tile="import_export" type="button">
+          <i class="ti ti-transfer" aria-hidden="true"></i>
+          <span class="home-tile-title">Importer / exporter</span>
+          <span class="home-tile-desc">Tuples en JSONL, modèle en .fga.</span>
+        </button>
+        </div>
+      </section>
+
+      <div class="home-grid">
+        <section class="home-card" aria-labelledby="home-types-title">
+          <h2 id="home-types-title">Tuples par type d'objet</h2>
+          <ul class="home-bars" id="home-types"></ul>
+        </section>
+        <section class="home-card" aria-labelledby="home-rels-title">
+          <h2 id="home-rels-title">Relations les plus utilisées</h2>
+          <ul class="home-bars" id="home-relations"></ul>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <!-- Page Admin DSL : éditeur + graphe en split-pane. Layout inspiré du
+       playground Auth0 FGA : header compact avec compteur de types et
+       actions (Apply, Reset, Help), éditeur monospace dark theme à gauche,
+       graphe de prévisualisation à droite, légende en bas. -->
+  <section class="dsl-page" id="dsl-page" hidden aria-label="Admin DSL">
+    <!-- Header compact -->
+    <header class="dsl-header">
+      <div class="dsl-header-title">
+        <i class="ti ti-sitemap" aria-hidden="true"></i>
+        <h2 id="dsl-title">Authorization Model</h2>
+        <span class="dsl-header-count" id="dsl-type-count">(0 types)</span>
+      </div>
+      <div class="dsl-header-actions">
+        <button type="button" class="btn dsl-secondary" id="btn-dsl-history" title="Historique des versions du modèle">
+          <i class="ti ti-history" aria-hidden="true"></i> History
+        </button>
+        <!-- Bouton "Generate SDK" : ouvre la modale de génération de code client. -->
+        <button type="button" class="btn dsl-secondary" id="btn-generate-sdk" title="Générer le code client SDK (TS, Go, Python, curl)">
+          <i class="ti ti-code" aria-hidden="true"></i> Generate SDK
+        </button>
+        <!-- Format toggle : DSL / JSON -->
+        <div class="dsl-format-toggle" role="tablist" aria-label="Format d'édition">
+          <button type="button" class="dsl-fmt-btn active" data-fmt="dsl" role="tab" aria-selected="true">DSL</button>
+          <button type="button" class="dsl-fmt-btn" data-fmt="json" role="tab" aria-selected="false">JSON</button>
+        </div>
+        <button type="button" class="btn dsl-secondary" id="dsl-reset" title="Recharger le DSL par défaut">
+          <i class="ti ti-rotate" aria-hidden="true"></i> Reset
+        </button>
+        <button type="button" class="btn dsl-primary" id="dsl-apply" data-requires-write title="Appliquer le DSL au store OpenFGA actif">
+          <i class="ti ti-cloud-upload" aria-hidden="true"></i> Apply
+        </button>
+        <button type="button" class="icon-btn" id="dsl-help" title="Aide / tour de la page" aria-label="Aide">
+          <i class="ti ti-help" aria-hidden="true"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Split-pane principal : éditeur + graphe -->
+    <div class="dsl-split" id="dsl-split">
+      <section class="dsl-pane dsl-pane-editor" id="dsl-pane-editor" aria-label="Éditeur de DSL">
+        <!-- Monté par views/dsl-editor.js -->
+      </section>
+      <div class="dsl-resizer" id="dsl-resizer" role="separator" aria-orientation="vertical" title="Glisser pour redimensionner" aria-label="Séparateur redimensionnable"></div>
+      <section class="dsl-pane dsl-pane-graph" id="dsl-pane-graph" aria-label="Aperçu du DSL">
+        <!-- Monté par views/dsl-graph/index.js -->
+      </section>
+    </div>
+
+    <!-- Footer compact : statut de validation + légende -->
+    <footer class="dsl-footer">
+      <div class="dsl-status" id="dsl-status">
+        <i class="ti ti-check" aria-hidden="true"></i>
+        <span id="dsl-status-text">—</span>
+      </div>
+      <div class="dsl-legend" id="dsl-legend">
+        <!-- Légende rendue par dsl-graph.js -->
+      </div>
+    </footer>
+
+    <!-- Panneau Lint sémantique : valide le DSL courant côté client avant push. -->
+    <aside class="dsl-lint-panel" id="dsl-lint-panel" aria-label="Linter sémantique"></aside>
+
+    <!-- Tooltip d'aide (visible au premier chargement) -->
+    <div class="dsl-tour" id="dsl-tour" hidden role="dialog" aria-label="Tour de la page Admin DSL">
+      <div class="dsl-tour-content">
+        <h3>Bienvenue dans Admin DSL</h3>
+        <ul>
+          <li><strong>Éditeur (gauche)</strong> : éditez le DSL OpenFGA (ou le JSON). Le graphe se met à jour en temps réel.</li>
+          <li><strong>Aperçu (droite)</strong> : visualisation du graphe des types et relations.</li>
+          <li><strong>Apply</strong> : pousse le modèle vers le store OpenFGA actif (crée une nouvelle version).</li>
+          <li><strong>Reset</strong> : recharge le DSL d'origine depuis le backend.</li>
+          <li><strong>JSON / DSL</strong> : alternez entre le format texte et sa représentation JSON.</li>
+          <li><strong>Generate SDK</strong> : génère du code client (TS, Go, Python, curl) à partir du modèle.</li>
+        </ul>
+        <button type="button" class="btn dsl-primary" id="dsl-tour-close">Compris</button>
+      </div>
+    </div>
+
+    <!-- Modal Historique des versions -->
+    <div class="modal-backdrop" id="history-backdrop">
+      <div class="modal modal-w640">
+        <div class="modal-header">
+          <div class="modal-title">
+            <i class="ti ti-history accent-icon" aria-hidden="true"></i>
+            <span>Historique des versions</span>
+          </div>
+          <button class="modal-close" id="btn-close-history" aria-label="Fermer">
+            <i class="ti ti-x"></i>
+          </button>
+        </div>
+        <div id="history-body">
+          <p class="hint hint-padded">Chargement…</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Generate SDK : sortie TS/Go/Python/curl du modèle courant. -->
+    <div class="modal-backdrop" id="codegen-backdrop">
+      <div class="modal modal-w760">
+        <div class="modal-header">
+          <div class="modal-title">
+            <i class="ti ti-code accent-icon" aria-hidden="true"></i>
+            <span>Générer le code client SDK</span>
+          </div>
+          <button class="modal-close" id="btn-close-codegen" aria-label="Fermer">
+            <i class="ti ti-x"></i>
+          </button>
+        </div>
+        <nav class="codegen-tabs" id="codegen-tabs" role="tablist"></nav>
+        <p class="codegen-meta" id="codegen-meta"></p>
+        <div class="codegen-code-wrapper" tabindex="0" role="region" aria-label="Code généré">
+          <pre class="codegen-code" id="codegen-code"></pre>
+        </div>
+        <div class="modal-footer codegen-footer">
+          <button type="button" class="btn" id="btn-codegen-download">
+            <i class="ti ti-download" aria-hidden="true"></i> <span id="codegen-filename">Télécharger</span>
+          </button>
+          <button type="button" class="btn primary" id="btn-codegen-copy">
+            <i class="ti ti-copy" aria-hidden="true"></i> Copier
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Page Audit : Check / ListObjects / ListUsers -->
+  <!-- Page Accès : rendue par controllers/access-page/. -->
+  <section class="app-page" id="access-page" hidden aria-label="Accès">
+    <header class="app-page-header">
+      <div class="app-page-header-title">
+        <i class="ti ti-users-group" aria-hidden="true"></i>
+        <h2>Accès</h2>
+      </div>
+      <div class="app-page-header-actions">
+        <label class="access-cluster" id="access-cluster-wrap" hidden title="Nom du cluster dans OpenFGA (CLUSTER_NAME du webhook) : chaque namespace y est rattaché à la volée">
+          <i class="ti ti-server-2" aria-hidden="true"></i> Cluster
+          <input type="text" id="access-cluster" autocomplete="off" list="access-cluster-list" spellcheck="false" />
+          <datalist id="access-cluster-list"></datalist>
+        </label>
+      </div>
+    </header>
+    <nav class="audit-tabs" id="access-tabs" role="tablist">
+      <button type="button" class="audit-tab active" data-access-tab="object" role="tab" aria-selected="true">
+        <i class="ti ti-box" aria-hidden="true"></i> Qui a accès
+        <span class="audit-tab-hint">à un objet</span>
+      </button>
+      <button type="button" class="audit-tab" data-access-tab="subject" role="tab" aria-selected="false">
+        <i class="ti ti-user" aria-hidden="true"></i> Droits d'un sujet
+        <span class="audit-tab-hint">utilisateur ou groupe</span>
+      </button>
+      <button type="button" class="audit-tab" data-access-tab="kubectl" role="tab" aria-selected="false" hidden>
+        <i class="ti ti-terminal-2" aria-hidden="true"></i> Simuler kubectl
+        <span class="audit-tab-hint">auth can-i</span>
+      </button>
+      <button type="button" class="audit-tab" data-access-tab="grant" role="tab" aria-selected="false" data-requires-write>
+        <i class="ti ti-user-plus" aria-hidden="true"></i> Attribuer
+        <span class="audit-tab-hint">un rôle</span>
+      </button>
+    </nav>
+    <div class="access-body">
+      <form class="access-form" id="access-form" autocomplete="off"></form>
+      <div class="access-results" id="access-results" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="app-page" id="audit-page" hidden aria-label="Audit">
+    <header class="app-page-header">
+      <div class="app-page-header-title">
+        <i class="ti ti-shield-check" aria-hidden="true"></i>
+        <h2 id="audit-title">Audit</h2>
+        <span class="app-page-header-count" id="audit-mode-count"></span>
+      </div>
+      <div class="app-page-header-actions">
+      </div>
+    </header>
+
+    <!-- Onglets des 3 modes. La fonctionnalité "Why" (chemin de résolution)
+         est intégrée directement dans le panneau de résultats de chaque
+         onglet : auto-chargée pour Check, accessible via un bouton
+         "Pourquoi ?" par item pour Reverse / Forward. -->
+    <nav class="audit-tabs" id="audit-tabs" role="tablist">
+      <button type="button" class="audit-tab active" data-audit-mode="check" role="tab" aria-selected="true">
+        <i class="ti ti-shield-check" aria-hidden="true"></i> Check
+      </button>
+      <button type="button" class="audit-tab" data-audit-mode="reverse" role="tab" aria-selected="false">
+        <i class="ti ti-arrow-back-up" aria-hidden="true"></i> Reverse
+        <span class="audit-tab-hint">qui a accès à X ?</span>
+      </button>
+      <button type="button" class="audit-tab" data-audit-mode="forward" role="tab" aria-selected="false">
+        <i class="ti ti-arrow-right" aria-hidden="true"></i> Forward
+        <span class="audit-tab-hint">à quoi X accède ?</span>
+      </button>
+    </nav>
+
+    <!-- Split-pane : formulaire (gauche, sticky) + résultats (droite, scrollable) -->
+    <div class="audit-split" id="audit-split">
+      <section class="audit-pane audit-pane-form" id="audit-pane-form" aria-label="Formulaire d'audit">
+        <!-- Le formulaire du mode courant est rendu ici par audit-page.js -->
+        <div id="audit-content"></div>
+      </section>
+      <div class="audit-resizer" id="audit-resizer" role="separator" aria-orientation="vertical" title="Glisser pour redimensionner" aria-label="Séparateur redimensionnable"></div>
+      <section class="audit-pane audit-pane-results" id="audit-pane-results" aria-label="Résultats">
+        <!-- Zone d'état vide + résultats (rendue par audit-page.js) -->
+        <div id="audit-results"></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- Page Assertions : gérer et exécuter les assertions du modèle -->
+  <section class="app-page" id="assertions-page" hidden aria-label="Assertions">
+    <header class="app-page-header">
+      <div class="app-page-header-title">
+        <i class="ti ti-test-pipe" aria-hidden="true"></i>
+        <h2 id="assertions-title">Assertions</h2>
+        <span class="app-page-header-count" id="assertions-count"></span>
+        <span class="assertions-meta" id="assertions-meta">
+          <span class="assertions-meta-label">Modèle lié :</span>
+          <code id="assertions-model-id" title="">—</code>
+        </span>
+      </div>
+      <div class="app-page-header-actions">
+      </div>
+    </header>
+
+    <div class="audit-split" id="assertions-split">
+      <section class="audit-pane audit-pane-form" id="assertions-pane-form" aria-label="Formulaire assertions">
+        <div class="assertions-toolbar">
+          <button type="button" class="btn primary" id="btn-assertions-save" data-requires-write>
+            <i class="ti ti-cloud-upload" aria-hidden="true"></i> Sauvegarder
+          </button>
+          <button type="button" class="btn" id="btn-assertions-run">
+            <i class="ti ti-play" aria-hidden="true"></i> Tout exécuter
+          </button>
+        </div>
+        <div class="assertions-explainer" id="assertions-explainer">
+          <i class="ti ti-info-circle" aria-hidden="true"></i>
+          Les assertions sont liées à cette version du authorization model. Changer de store ou appliquer un nouveau modèle invalide les assertions actuelles.
+        </div>
+        <div class="assertions-section">
+          <div class="section-label">Assertions existantes</div>
+          <table class="assertions-table" id="assertions-table">
+            <thead><tr><th>User</th><th>Relation</th><th>Object</th><th>Attendu</th><th></th></tr></thead>
+            <tbody id="assertions-table-body">
+              <tr class="assertions-empty"><td colspan="5">Aucune assertion.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="assertions-section">
+          <div class="section-label">Ajouter une assertion</div>
+          <div class="assertions-add-grid">
+            <div class="form-group">
+              <label>User</label>
+              <input type="text" id="assertion-new-user" placeholder="user:anne" autocomplete="off" list="assertions-type-list" />
+            </div>
+            <div class="form-group">
+              <label>Relation</label>
+              <input type="text" id="assertion-new-relation" placeholder="viewer" autocomplete="off" list="assertions-rel-list" />
+            </div>
+            <div class="form-group">
+              <label>Object</label>
+              <input type="text" id="assertion-new-object" placeholder="document:1" autocomplete="off" list="assertions-object-list" />
+            </div>
+            <div class="form-group form-group-center">
+              <label class="check-label">
+                <input type="checkbox" id="assertion-new-allowed" checked />
+                <span>allowed</span>
+              </label>
+            </div>
+            <div class="form-group form-group-center">
+              <button type="button" class="btn" id="btn-assertions-add">
+                <i class="ti ti-plus"></i> Ajouter
+              </button>
+            </div>
+          </div>
+          <!-- Datalists d'autocompletion, peuplées depuis state.storeModel. -->
+          <datalist id="assertions-type-list"></datalist>
+          <datalist id="assertions-rel-list"></datalist>
+          <datalist id="assertions-object-list"></datalist>
+        </div>
+      </section>
+      <div class="audit-resizer" id="assertions-resizer" role="separator" aria-orientation="vertical" title="Glisser pour redimensionner" aria-label="Séparateur redimensionnable"></div>
+      <section class="audit-pane audit-pane-results" id="assertions-pane-results" aria-label="Résultats">
+        <div id="assertions-results">
+          <p class="hint hint-padded">Cliquez sur "Tout exécuter" pour tester les assertions.</p>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <!-- Main -->
+  <section class="tuples-page" id="tuples-page" aria-label="Tuples">
+
+    <div class="toolbar">
+      <div class="search-wrap" id="search-wrap">
+        <i class="ti ti-search" aria-hidden="true"></i>
+        <input type="text" id="search" placeholder="Rechercher un objet, un utilisateur…" autocomplete="off" />
+        <div class="search-suggest" id="search-suggest" role="listbox" aria-label="Suggestions de recherche"></div>
+      </div>
+      <select class="filter" id="rel-filter" aria-label="Filtrer par relation">
+        <option value="">Toutes les relations</option>
+      </select>
+      <div class="view-switch" id="view-switch">
+        <button id="view-cards" class="active" data-view="cards" title="Vue cartes">
+          <i class="ti ti-layout-grid" aria-hidden="true"></i> Cartes
+        </button>
+        <button id="view-graph" data-view="graph" title="Vue graphe">
+          <i class="ti ti-affiliate" aria-hidden="true"></i> Graphe
+        </button>
+        <!-- Compare avec un autre store : ouvre le picker de store-diff. -->
+        <button id="btn-compare-store" class="btn" title="Comparer les tuples avec un autre store">
+          <i class="ti ti-arrows-exchange" aria-hidden="true"></i> Compare
+        </button>
+      </div>
+      <button class="btn" id="btn-add-tuple" data-requires-write>
+        <i class="ti ti-plus" aria-hidden="true"></i> Ajouter
+      </button>
+      <button class="btn" id="btn-connect">
+        <i class="ti ti-plug-connected" aria-hidden="true"></i> Connexion
+      </button>
+    </div>
+
+    <div class="stats-bar" id="stats"></div>
+    <div class="type-tabs" id="type-tabs"></div>
+    <div class="grid" id="grid"></div>
+
+    <div class="graph-wrap" id="graph-wrap">
+      <div class="graph-legend" id="graph-legend"></div>
+
+    <!-- Header dédié à la vue Cytoscape (visible uniquement quand
+         state.currentView === 'graph-cy'). Aligné visuellement sur la
+         toolbar du panneau droit de l'Admin DSL pour cohérence. -->
+    <div class="cy-header" id="cy-header" hidden>
+      <div class="cy-header-left">
+        <span class="cy-header-icon"><i class="ti ti-affiliate" aria-hidden="true"></i></span>
+        <span class="cy-header-title">Graphe des relations</span>
+        <span class="cy-header-divider"></span>
+        <div class="cy-header-stats" aria-label="Statistiques du graphe">
+          <span class="cy-stat" title="Nombre de nœuds">
+            <i class="ti ti-shape" aria-hidden="true"></i>
+            <span class="cy-stat-label">Nœuds</span>
+            <span id="cy-stat-nodes">0</span>
+          </span>
+          <span class="cy-stat" title="Nombre d'arêtes">
+            <i class="ti ti-arrow-big-right-line" aria-hidden="true"></i>
+            <span class="cy-stat-label">Arêtes</span>
+            <span id="cy-stat-edges">0</span>
+          </span>
+        </div>
+      </div>
+      <div class="cy-header-actions">
+        <button class="icon-btn" id="cy-zoom-out" title="Zoom arrière" type="button" aria-label="Zoom arrière">
+          <i class="ti ti-zoom-out" aria-hidden="true"></i>
+        </button>
+        <button class="icon-btn" id="cy-zoom-in"  title="Zoom avant"   type="button" aria-label="Zoom avant">
+          <i class="ti ti-zoom-in" aria-hidden="true"></i>
+        </button>
+        <button class="icon-btn" id="cy-fit"      title="Adapter à la vue" type="button" aria-label="Fit">
+          <i class="ti ti-arrows-fit" aria-hidden="true"></i>
+        </button>
+        <button class="icon-btn" id="cy-relayout" title="Ré-équilibrer la disposition" type="button" aria-label="Relancer le layout">
+          <i class="ti ti-refresh" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Loader Cytoscape (visible pendant le chargement paresseux du bundle CDN) -->
+    <div class="cy-loader" id="cy-loader" hidden>
+      <div class="cy-loader-spinner" aria-hidden="true"></div>
+      <p>Chargement du graphe…</p>
+    </div>
+
+    <!-- Empty state Cytoscape (visible quand le graphe est vide) -->
+    <div class="cy-empty" id="cy-empty" hidden>
+      <i class="ti ti-graph-off" aria-hidden="true"></i>
+      <h3>Aucun tuple à visualiser</h3>
+      <p>Ajoutez des tuples ou changez de store pour voir le graphe.</p>
+    </div>
+
+    <!-- Moteur de graphe non chargé (réseau, fichier manquant) -->
+    <div class="cy-empty" id="cy-error" role="alert" hidden>
+      <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+      <h3>Le graphe n'a pas pu être chargé</h3>
+      <p>Le moteur de rendu ne s'est pas chargé. Vérifiez la connexion puis réessayez.</p>
+      <div class="cy-error-actions">
+        <button type="button" class="btn primary" id="cy-error-retry">Réessayer</button>
+        <button type="button" class="btn" id="cy-error-cards">Afficher en cartes</button>
+      </div>
+    </div>
+
+    <!-- Sidebar arbre : apparait quand une racine est selectionnee -->
+    <div class="tree-panel" id="tree-panel" aria-label="Arbre descendant et ascendant">
+      <div class="tree-panel-header">
+        <div class="tree-panel-title">
+          <i class="ti ti-binary-tree" aria-hidden="true"></i>
+          <span>Arbre voisinage</span>
+        </div>
+        <div class="tree-panel-actions">
+          <button id="btn-tree-fit" class="icon-btn" title="Adapter à la vue" aria-label="Fit">
+            <i class="ti ti-arrows-fit" aria-hidden="true"></i>
+          </button>
+          <button id="btn-tree-close" class="icon-btn" title="Fermer" aria-label="Fermer">
+            <i class="ti ti-x" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+      <div class="tree-panel-controls">
+        <div class="tree-panel-row">
+          <label for="tree-depth" class="hint hint-flush slider-label">
+            <span>Profondeur</span><span><span id="tree-depth-val">1</span> hop(s)</span>
+          </label>
+          <input id="tree-depth" type="range" min="1" max="5" step="1" value="1" />
+        </div>
+      </div>
+      <div class="tree-resizer" id="tree-resizer" aria-label="Redimensionner la sidebar" title="Glisser pour redimensionner"></div>
+      <div class="tree-panel-body" id="tree-body"></div>
+    </div>
+      <div class="graph-focus" id="graph-focus" aria-label="Focus sur un voisinage">
+        <div class="graph-focus-title">
+          <i class="ti ti-focus-2" aria-hidden="true"></i> Focus voisinage
+        </div>
+        <div class="graph-focus-row">
+          <label for="focus-root" class="hint hint-flush">Nœud racine</label>
+          <select id="focus-root" class="filter filter-compact">
+            <option value="">— aucun —</option>
+          </select>
+        </div>
+        <button id="btn-focus-clear" class="btn btn-compact-wide">
+          <i class="ti ti-x" aria-hidden="true"></i> Réinitialiser le focus
+        </button>
+      </div>
+      <div class="graph-controls">
+        <button id="btn-graph-zoom-in" title="Zoom avant" aria-label="Zoom avant"><i class="ti ti-plus" aria-hidden="true"></i></button>
+        <button id="btn-graph-zoom-out" title="Zoom arrière" aria-label="Zoom arrière"><i class="ti ti-minus" aria-hidden="true"></i></button>
+        <button id="btn-graph-reset" title="Réinitialiser la vue" aria-label="Réinitialiser"><i class="ti ti-focus-centered" aria-hidden="true"></i></button>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Page Import / Export : dédiée, suit le pattern d'audit-page.
+       Placée à l'intérieur de .app pour bénéficier du layout flex
+       column (sinon elle s'empile après le .app, hors viewport). -->
+  <section class="app-page" id="io-page" hidden aria-label="Import / Export">
+    <header class="app-page-header">
+      <div class="app-page-header-title">
+        <i class="ti ti-transfer" aria-hidden="true"></i>
+        <h2 id="io-title">Import / Export</h2>
+        <span class="app-page-header-count" id="io-mode-count"></span>
+      </div>
+      <div class="app-page-header-actions">
+      </div>
+    </header>
+
+    <nav class="audit-tabs" id="io-tabs" role="tablist">
+      <button type="button" class="audit-tab active" data-io-mode="export" role="tab" aria-selected="true">
+        <i class="ti ti-download" aria-hidden="true"></i> Exporter
+      </button>
+      <button type="button" class="audit-tab" data-io-mode="import" data-requires-write role="tab" aria-selected="false">
+        <i class="ti ti-upload" aria-hidden="true"></i> Importer
+      </button>
+      <button type="button" class="audit-tab" data-io-mode="model" role="tab" aria-selected="false">
+        <i class="ti ti-sitemap" aria-hidden="true"></i> Modèle
+      </button>
+    </nav>
+
+    <div class="audit-split" id="io-split">
+      <section class="audit-pane audit-pane-form" id="io-pane-form" aria-label="Formulaire import/export">
+        <div id="io-content"></div>
+      </section>
+      <div class="audit-resizer" id="io-resizer" role="separator" aria-orientation="vertical" title="Glisser pour redimensionner" aria-label="Séparateur redimensionnable"></div>
+      <section class="audit-pane audit-pane-results" id="io-pane-results" aria-label="Résultats">
+        <div id="io-results"></div>
+      </section>
+    </div>
+  </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- Modal : détail d'un nœud -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title"></div>
+      <button class="modal-close" id="btn-close-modal" aria-label="Fermer">
+        <i class="ti ti-x" aria-hidden="true"></i>
+      </button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Modal : modèle d'autorisation -->
+<div class="modal-backdrop" id="model-backdrop">
+  <div class="modal modal-w680">
+    <div class="modal-header">
+      <div class="modal-title">
+        <div class="node-icon node-icon-sm node-icon-accent">
+          <i class="ti ti-sitemap" aria-hidden="true"></i>
+        </div>
+        <span>Modèle d'autorisation <span id="model-schema" class="model-schema"></span></span>
+      </div>
+      <button class="modal-close" id="btn-close-model" aria-label="Fermer">
+        <i class="ti ti-x" aria-hidden="true"></i>
+      </button>
+    </div>
+    <div id="model-body"></div>
+  </div>
+</div>
+
+<!-- Store Diff : picker de store à comparer + modale de résultat. -->
+    <div class="modal-backdrop" id="store-diff-picker">
+      <div class="modal modal-w420">
+        <div class="modal-header">
+          <div class="modal-title">
+            <i class="ti ti-arrows-exchange accent-icon" aria-hidden="true"></i>
+            <span>Comparer avec…</span>
+          </div>
+          <button class="modal-close" id="btn-store-diff-cancel" aria-label="Annuler">
+            <i class="ti ti-x"></i>
+          </button>
+        </div>
+        <div class="audit-form">
+          <div class="audit-field">
+            <label>Store B</label>
+            <select id="store-diff-pick-b"></select>
+            <div class="hint">Les tuples du store actif seront comparés à ceux de ce store.</div>
+          </div>
+          <div class="audit-actions">
+            <button type="button" class="btn primary" id="btn-store-diff-run">
+              <i class="ti ti-play" aria-hidden="true"></i> Lancer le diff
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="store-diff-backdrop">
+      <div class="modal modal-w680">
+        <div class="modal-header">
+          <div class="modal-title">
+            <i class="ti ti-arrows-exchange accent-icon" aria-hidden="true"></i>
+            <span>Diff entre 2 stores</span>
+          </div>
+          <button class="modal-close" id="btn-store-diff-close" aria-label="Fermer">
+            <i class="ti ti-x"></i>
+          </button>
+        </div>
+        <div id="store-diff-body"></div>
+        <div class="modal-footer modal-footer-row">
+          <button type="button" class="btn" id="btn-store-diff-clear">
+            <i class="ti ti-x" aria-hidden="true"></i> Effacer le diff
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal : ajout de tuple -->
+<div class="modal-backdrop" id="add-backdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">
+        <div class="node-icon node-icon-sm node-icon-accent">
+          <i class="ti ti-plus" aria-hidden="true"></i>
+        </div>
+        <span>Ajouter un tuple</span>
+      </div>
+      <button class="modal-close" id="btn-close-add" aria-label="Fermer">
+        <i class="ti ti-x" aria-hidden="true"></i>
+      </button>
+    </div>
+    <div class="section-label section-label-first">Objet (la ressource)</div>
+    <div class="add-grid add-grid-object">
+      <div class="form-group">
+        <label>Type d'objet</label>
+        <select id="add-obj-type"></select>
+      </div>
+      <div class="form-group">
+        <label>Identifiant</label>
+        <input type="text" id="add-obj-id" placeholder="lakehouse" autocomplete="off" list="add-obj-id-list" />
+        <datalist id="add-obj-id-list"></datalist>
+        <div class="hint" id="add-obj-hint">id de l'objet</div>
+      </div>
+    </div>
+
+    <div class="section-label">Relation</div>
+    <div class="form-group form-group-spaced">
+      <select id="add-relation"></select>
+      <div class="hint" id="add-rel-hint">relations directement assignables sur ce type</div>
+    </div>
+
+    <div class="section-label">Sujet (qui obtient l'accès)</div>
+    <div class="add-grid add-grid-subject">
+      <div class="form-group">
+        <label>Type de sujet</label>
+        <select id="add-user-type"></select>
+      </div>
+      <div class="form-group">
+        <label>Identifiant</label>
+        <input type="text" id="add-user-id" placeholder="user-id" autocomplete="off" list="add-user-id-list" />
+        <datalist id="add-user-id-list"></datalist>
+        <div class="hint">id du sujet</div>
+      </div>
+      <div class="form-group">
+        <label>Userset (relation)</label>
+        <select id="add-user-rel"></select>
+        <div class="hint">ex: #assignee</div>
+      </div>
+    </div>
+
+    <!-- Champs combinés conservés pour la logique de validation / push -->
+    <input type="hidden" id="add-user" />
+    <input type="hidden" id="add-object" />
+
+    <div class="tuple-row add-preview" id="add-preview">
+      <span class="text-muted">Aperçu…</span>
+    </div>
+    <p class="hint add-warning" id="add-warning" hidden></p>
+    <div class="add-actions">
+      <button class="btn primary" id="btn-add-push" title="Ajouter aux modifications en attente (sera commité via le panneau 'Modifications en attente')">
+        <i class="ti ti-stack-2" aria-hidden="true"></i> Ajouter
+      </button>
+    </div>
+    <p class="hint add-push-note" id="add-push-note">
+      L'écriture API nécessite une connexion OpenFGA configurée côté serveur.
+    </p>
+  </div>
+</div>
+
+<!-- Drawer "Modifications en attente" : staging area pour les tuples
+         à ajouter/supprimer avant commit groupé. Visible seulement
+         quand state.pendingAdds ou state.pendingRemoves est non vide. -->
+    <aside class="pending-panel" id="pending-panel" data-requires-write aria-label="Modifications en attente"></aside>
+    <!-- Pastille de droite (`.pending-toggle`) : visible quand le
+         drawer est fermé. Click = rouvre. -->
+    <button type="button" class="pending-toggle" id="pending-toggle" data-requires-write title="Voir les modifications en attente" aria-label="Modifications en attente">
+      <i class="ti ti-stack-2" aria-hidden="true"></i>
+      <span class="pending-toggle-badge">0</span>
+    </button>
+
+    <!-- Modale Import / Export tuples. Conservée dans le DOM pour les
+         liens directs (pas ouverte par la toolbar : celle-ci renvoie
+         vers la page dédiée #io-page). -->
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script type="module" src="./js/main.js"></script>
+</body>
+</html>

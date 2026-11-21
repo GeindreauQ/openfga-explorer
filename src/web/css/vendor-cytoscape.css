@@ -1,0 +1,3 @@
+/* Règle que Cytoscape injecte normalement dans un <style> (bloqué par la
+   CSP) ; l'id du <link> lui indique qu'elle est déjà présente. */
+.__________cytoscape_container { position: relative; }

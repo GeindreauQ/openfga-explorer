@@ -1,0 +1,44 @@
+# Exemple : Modèle GitHub-like (organizations, teams, repos)
+#
+# Démontre : union (or), intersection (and), exclusion (but not),
+# computed userset, tuple-to-userset (X from Y), userset rewrite (X#rel),
+# wildcard (X:*).
+#
+# Inspiré du modeling guide officiel OpenFGA pour GitHub.
+# https://openfga.dev/docs/modeling/advanced/github
+
+model
+  schema 1.1
+
+type user
+
+type team
+  relations
+    define member: [user]
+
+type organization
+  relations
+    define member: [user]
+    # Toutes les relations nécessaires pour que les `from owner` du type
+    # `repo` résolvent : owner d'un repo est une organization, et on
+    # regarde les relations sur cette organization.
+    define repo_admin: [user, team#member]
+    define maintainer:  [user, team#member]
+    define writer:      [user, team#member]
+    define triager:     [user, team#member]
+    define reader:      [user, team#member]
+
+type repo
+  relations
+    # admin = direct OU repo_admin du owner (organization)
+    define admin: [user, team#member, organization#member] or repo_admin from owner
+    # maintainer = direct OU admin (computed userset)
+    define maintainer: [user, team#member, organization#member] or admin
+    # writer = direct OU maintainer OU writer du owner
+    define writer: [user, team#member, organization#member] or maintainer or writer from owner
+    # triager = direct OU writer
+    define triager: [user, team#member, organization#member] or writer
+    # reader = direct OU triager OU reader du owner
+    define reader: [user, team#member, organization#member] or triager or reader from owner
+    # owner = une organization (référence)
+    define owner: [organization]

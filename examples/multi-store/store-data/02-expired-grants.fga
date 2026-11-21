@@ -1,0 +1,24 @@
+# Exemple : Conditions temporelles (non_expired_grant).
+#
+# Démontre : condition CEL avec types timestamp + duration, syntaxe
+# `[user with <cond>]`, paramètres typés.
+#
+# Inspiré de https://openfga.dev/docs/modeling/conditions
+
+model
+  schema 1.1
+
+type user
+
+type document
+  relations
+    # Un user ne peut viewer que si la condition `non_expired_grant`
+    # évalue à true (c'est-à-dire current_time < grant_time + grant_duration).
+    define viewer: [user with non_expired_grant]
+
+# `current_time` est fourni à chaque Check/ListObjects via le `context`.
+# `grant_time` et `grant_duration` sont stockés dans le tuple au moment
+# du Write.
+condition non_expired_grant(current_time: timestamp, grant_time: timestamp, grant_duration: duration) {
+  current_time < grant_time + grant_duration
+}

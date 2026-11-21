@@ -1,0 +1,40 @@
+{
+  "tuple_keys": [
+    {
+      "user": "user:anne",
+      "relation": "viewer",
+      "object": "document:active-report",
+      "condition": {
+        "name": "non_expired_grant",
+        "context": {
+          "grant_time": "2026-06-25T00:00:00Z",
+          "grant_duration": "720h"
+        }
+      }
+    },
+    {
+      "user": "user:bob",
+      "relation": "viewer",
+      "object": "document:active-report",
+      "condition": {
+        "name": "non_expired_grant",
+        "context": {
+          "grant_time": "2026-06-25T00:00:00Z",
+          "grant_duration": "1h"
+        }
+      }
+    },
+    {
+      "user": "user:carol",
+      "relation": "viewer",
+      "object": "document:old-archive",
+      "condition": {
+        "name": "non_expired_grant",
+        "context": {
+          "grant_time": "2026-01-01T00:00:00Z",
+          "grant_duration": "1h"
+        }
+      }
+    }
+  ]
+}

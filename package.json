@@ -1,0 +1,19 @@
+{
+  "name": "openfga-explorer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Web UI for OpenFGA — backend Go + frontend vanilla JS (no bundler).",
+  "scripts": {
+    "dev": "docker compose up --build",
+    "down": "docker compose down",
+    "test:unit": "cd src/server && go test ./...",
+    "test:vet": "cd src/server && go vet ./...",
+    "test:build": "cd src/server && go build ./...",
+    "test:e2e": "cd tests && npm install && node run_all.mjs",
+    "lint:helm": "helm lint charts/openfga-explorer",
+    "format:check": "cd src/server && gofmt -l ."
+  },
+  "devDependencies": {
+    "playwright": "^1.61.1"
+  }
+}

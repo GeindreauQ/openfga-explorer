@@ -1,0 +1,37 @@
+OpenFGA Explorer est déployé.
+
+Service (ClusterIP) : {{ include "openfga-explorer.fullname" . }}:{{ .Values.service.port }}
+
+Pour y accéder en local :
+
+  kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "openfga-explorer.fullname" . }} 8000:{{ .Values.service.port }}
+
+Puis ouvrir http://localhost:8000
+
+Connexion OpenFGA :
+  URL : {{ .Values.openfga.url }}
+
+Sélection du store :
+  Le store actif n'est PAS configuré statiquement : il est listé depuis
+  l'UI au démarrage (tous les stores disponibles sur `openfga.url` sont
+  affichés dans le sélecteur de la toolbar). Le premier store est
+  sélectionné automatiquement si l'utilisateur ne l'a pas déjà fait.
+
+Auth :
+{{- if .Values.auth.disabled }}
+  Mode démo : auth désactivée (AUTH_DISABLED=1).
+{{- else }}
+  - OIDC    : {{ if .Values.oidc.issuerUrl }}activé ({{ .Values.oidc.issuerUrl }}){{ else }}non configuré (utiliser oidc.issuerUrl dans values){{ end }}
+  - Local   : compte admin (mot de passe dans les logs au 1er boot).
+  - Cookies : {{ if .Values.auth.secureCookies }}Secure activé (HTTPS requis){{ else }}non Secure (HTTP){{ end }}
+{{- end }}
+
+Pour la production :
+  1. Définir auth.secret.sessionSecret (≥32 chars).
+  2. Définir auth.secret.adminPassword (sinon généré aléatoirement).
+  3. Mettre secureCookies=true et placer derrière HTTPS.
+  4. Ne PAS utiliser AUTH_DISABLED.
+  5. Pour OIDC : renseigner oidc.issuerUrl/clientId/redirectUrl dans values
+     (oidc.clientSecret via auth.secret.adminPassword-like mechanism, ou
+     externalSecret — TODO : externaliser oidc.clientSecret comme le token).
+

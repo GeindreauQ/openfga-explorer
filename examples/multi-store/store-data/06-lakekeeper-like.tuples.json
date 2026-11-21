@@ -1,0 +1,61 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{
+  "tuple_keys": [
+  { "user": "user:alice",     "relation": "assignee",  "object": "role:platform-admin" },
+  { "user": "user:bob",       "relation": "assignee",  "object": "role:data-engineer" },
+  { "user": "user:carol",     "relation": "assignee",  "object": "role:analyst" },
+  { "user": "user:alice",     "relation": "ownership", "object": "role:platform-admin" },
+  { "user": "user:alice",     "relation": "admin",     "object": "server:lakekeeper" },
+  { "user": "role:platform-admin#assignee", "relation": "operator", "object": "server:lakekeeper" },
+  { "user": "project:analytics","relation": "project",  "object": "server:lakekeeper" },
+  { "user": "server:lakekeeper","relation": "server",  "object": "project:analytics" },
+  { "user": "warehouse:lakehouse","relation": "warehouse","object": "project:analytics" },
+  { "user": "user:alice",     "relation": "project_admin", "object": "project:analytics" },
+  { "user": "role:data-engineer#assignee","relation": "data_admin","object": "project:analytics" },
+  { "user": "role:analyst#assignee","relation": "select", "object": "project:analytics" },
+  { "user": "project:analytics","relation": "project", "object": "warehouse:lakehouse" },
+  { "user": "namespace:sales","relation": "namespace","object": "warehouse:lakehouse" },
+  { "user": "user:bob",       "relation": "ownership", "object": "warehouse:lakehouse" },
+  { "user": "role:data-engineer#assignee","relation": "modify","object": "warehouse:lakehouse" },
+  { "user": "warehouse:lakehouse","relation": "parent","object": "namespace:sales" },
+  { "user": "lakekeeper_table:orders","relation": "child","object": "namespace:sales" },
+  { "user": "lakekeeper_view:revenue","relation": "child","object": "namespace:sales" },
+  { "user": "role:analyst#assignee","relation": "select","object": "namespace:sales" },
+  { "user": "user:bob",       "relation": "modify",   "object": "namespace:sales" },
+  { "user": "namespace:sales","relation": "parent",   "object": "lakekeeper_table:orders" },
+  { "user": "user:bob",       "relation": "ownership","object": "lakekeeper_table:orders" },
+  { "user": "role:analyst#assignee","relation": "select","object": "lakekeeper_table:orders" },
+  { "user": "namespace:sales","relation": "parent",   "object": "lakekeeper_view:revenue" },
+  { "user": "role:analyst#assignee","relation": "select","object": "lakekeeper_view:revenue" },
+  { "user": "user:carol",     "relation": "describe", "object": "lakekeeper_view:revenue" }
+]
+}

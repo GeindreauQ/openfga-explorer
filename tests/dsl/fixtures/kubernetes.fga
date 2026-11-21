@@ -1,0 +1,43 @@
+model
+  schema 1.1
+
+# Utilisateur Kubernetes authentifié (OIDC), sans son préfixe : oidc:alice -> user:alice.
+type user
+
+# Groupe de l'IdP. Le webhook envoie l'appartenance en tuple contextuel à
+# chaque requête (claim groups du jeton) : rien à synchroniser.
+type group
+  relations
+    define member: [user]
+
+# Tout le cluster. Chaque namespace y est rattaché par un tuple contextuel.
+type cluster
+  relations
+    define admin: [user, group#member]
+    define editor: [user, group#member] or admin
+    define viewer: [user, group#member] or editor
+    define can_read: viewer
+    define can_read_secrets: editor
+    define can_write: editor
+    define can_exec: editor
+    define can_admin: admin
+
+# Regroupe des namespaces : project:billing#project@namespace:billing.
+type project
+  relations
+    define admin: [user, group#member]
+    define editor: [user, group#member] or admin
+    define viewer: [user, group#member] or editor
+
+type namespace
+  relations
+    define cluster: [cluster]
+    define project: [project]
+    define admin: [user, group#member] or admin from project or admin from cluster
+    define editor: [user, group#member] or admin or editor from project or editor from cluster
+    define viewer: [user, group#member] or editor or viewer from project or viewer from cluster
+    define can_read: viewer
+    define can_read_secrets: editor
+    define can_write: editor
+    define can_exec: editor
+    define can_admin: admin

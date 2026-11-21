@@ -1,0 +1,75 @@
+model
+  # OpenFGA authorization model — Lakekeeper demo
+  # See https://openfga.dev/docs/configuration-language for syntax.
+  schema 1.2
+
+type user
+
+type role
+  relations
+    define assignee:  [user, role#assignee]
+    define ownership: [user, role#assignee]
+    define project:   [project]
+
+type server
+  relations
+    define admin:    [user, role#assignee]
+    define operator: [user, role#assignee]
+    define project:  [project]
+
+type project
+  relations
+    define create:         [user, role#assignee]
+    define data_admin:     [user, role#assignee]
+    define describe:       [user, role#assignee]
+    define modify:         [user, role#assignee]
+    define project_admin:  [user, role#assignee]
+    define role_creator:   [user, role#assignee]
+    define security_admin: [user, role#assignee]
+    define select:         [user, role#assignee]
+    define server:         [server]
+    define warehouse:      [warehouse]
+
+type warehouse
+  relations
+    define create:        [user, role#assignee]
+    define describe:      [user, role#assignee]
+    define manage_grants: [user, role#assignee]
+    define modify:        [user, role#assignee]
+    define namespace:     [namespace]
+    define ownership:     [user, role#assignee]
+    define pass_grants:   [user, role#assignee]
+    define project:       [project]
+    define select:        [user, role#assignee]
+
+type namespace
+  relations
+    define child:         [namespace, lakekeeper_table, lakekeeper_view]
+    define create:        [user, role#assignee]
+    define describe:      [user, role#assignee]
+    define manage_grants: [user, role#assignee]
+    define modify:        [user, role#assignee]
+    define ownership:     [user, role#assignee]
+    define parent:        [namespace, warehouse]
+    define pass_grants:   [user, role#assignee]
+    define select:        [user, role#assignee]
+
+type lakekeeper_table
+  relations
+    define describe:      [user, role#assignee]
+    define manage_grants: [user, role#assignee]
+    define modify:        [user, role#assignee]
+    define ownership:     [user, role#assignee]
+    define parent:        [namespace]
+    define pass_grants:   [user, role#assignee]
+    define select:        [user, role#assignee]
+
+type lakekeeper_view
+  relations
+    define describe:      [user, role#assignee]
+    define manage_grants: [user, role#assignee]
+    define modify:        [user, role#assignee]
+    define ownership:     [user, role#assignee]
+    define parent:        [namespace]
+    define pass_grants:   [user, role#assignee]
+    define select:        [user, role#assignee]

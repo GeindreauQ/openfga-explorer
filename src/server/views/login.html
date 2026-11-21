@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Connexion — OpenFGA Explorer</title>
+<link rel="stylesheet" href="/css/login.css" />
+</head>
+<body>
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-mark">OF</div>
+      <h1>OpenFGA Explorer</h1>
+    </div>
+
+    {{if .Error}}
+      <div class="alert">{{.Error}}</div>
+    {{end}}
+
+    {{if .OIDCEnabled}}
+      <p>Connectez-vous pour accéder à l'exploration des relations d'autorisation OpenFGA.</p>
+      <a class="btn-primary" href="/auth/login">
+        Se connecter avec OIDC
+      </a>
+      <div class="footer">Authentification via OpenID Connect (OIDC)</div>
+    {{else if .LocalEnabled}}
+      <div class="local-badge">Compte local</div>
+      <p>Authentification par nom d'utilisateur et mot de passe.</p>
+      <form method="POST" action="/auth/local" autocomplete="on">
+        <div class="form-field">
+          <label for="username">Nom d'utilisateur</label>
+          <input type="text" id="username" name="username" required autofocus
+                 autocomplete="username" value="{{.Username}}" />
+        </div>
+        <div class="form-field">
+          <label for="password">Mot de passe</label>
+          <input type="password" id="password" name="password" required
+                 autocomplete="current-password" />
+        </div>
+        <button type="submit" class="btn-primary">
+          Se connecter
+        </button>
+      </form>
+      <div class="footer">Compte par défaut : <code>admin</code> (mot de passe dans les logs au démarrage)</div>
+    {{else}}
+      <p>Authentification non configurée. Contactez l'administrateur.</p>
+    {{end}}
+  </div>
+</body>
+</html>

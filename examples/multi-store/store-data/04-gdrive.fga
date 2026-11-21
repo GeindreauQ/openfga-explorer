@@ -1,0 +1,42 @@
+# Exemple : Google Drive simplifié.
+#
+# Démontre : `and` (intersection), parenthésage, computed userset,
+# tuple-to-userset (X from Y).
+#
+# https://openfga.dev/docs/modeling/advanced/gdrive
+#
+# NOTE OpenFGA : chaque relation doit avoir au moins un entrypoint
+# `this {}` (ou computed userset vers une autre relation du même type)
+# pour qu'on puisse écrire des tuples.
+
+model
+  schema 1.1
+
+type user
+
+type organization
+  relations
+    define member: [user]
+
+type folder
+  relations
+    define viewer: [user, organization#member] or writer
+    define writer: [user, organization#member] or owner
+    define owner:  [user, organization#member]
+    define parent: [folder]
+
+type document
+  relations
+    # Entrypoints directs (nécessaires pour pouvoir écrire des tuples).
+    define viewer: [user, organization#member]
+    define writer: [user, organization#member]
+    define owner:  [user, organization#member]
+    # `organization` lie le document à son organization propriétaire.
+    define organization: [organization]
+    # `can_view` = viewer ET membre de l'org (computed userset via `from`).
+    define can_view: viewer and member from organization
+    # `can_write` = writer ET membre de l'org.
+    define can_write: writer and member from organization
+    # `can_comment` = reader OU writer, ET membre de l'org.
+    define reader: [user, organization#member]
+    define can_comment: reader and member from organization

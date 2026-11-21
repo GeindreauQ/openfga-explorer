@@ -1,0 +1,77 @@
+{
+  "tuple_keys": [
+    { "user": "user:alice",          "relation": "member",       "object": "organization:acme" },
+    { "user": "user:bob",            "relation": "member",       "object": "organization:globex" },
+    { "user": "organization:acme#member",   "relation": "subscriber", "object": "plan:free" },
+    { "user": "organization:globex#member", "relation": "subscriber", "object": "plan:pro" },
+    {
+      "user": "plan:free#subscriber",
+      "relation": "has_feature",
+      "object": "feature:can-view-page-history",
+      "condition": {
+        "name": "is_below_page_history_days_limit",
+        "context": { "page_history_days_limit": 7 }
+      }
+    },
+    {
+      "user": "plan:free#subscriber",
+      "relation": "has_feature",
+      "object": "feature:can-invite-collaborator",
+      "condition": {
+        "name": "is_below_collaborator_limit",
+        "context": { "collaborator_limit": 10 }
+      }
+    },
+    {
+      "user": "plan:free#subscriber",
+      "relation": "has_feature",
+      "object": "feature:can-sync-rows",
+      "condition": {
+        "name": "is_below_row_sync_limit",
+        "context": { "row_sync_limit": 100 }
+      }
+    },
+    {
+      "user": "plan:free#subscriber",
+      "relation": "has_feature",
+      "object": "feature:basic-page-analytics"
+    },
+    {
+      "user": "plan:pro#subscriber",
+      "relation": "has_feature",
+      "object": "feature:can-view-page-history",
+      "condition": {
+        "name": "is_below_page_history_days_limit",
+        "context": { "page_history_days_limit": 30 }
+      }
+    },
+    {
+      "user": "plan:pro#subscriber",
+      "relation": "has_feature",
+      "object": "feature:can-invite-collaborator",
+      "condition": {
+        "name": "is_below_collaborator_limit",
+        "context": { "collaborator_limit": 100 }
+      }
+    },
+    {
+      "user": "plan:pro#subscriber",
+      "relation": "has_feature",
+      "object": "feature:can-sync-rows",
+      "condition": {
+        "name": "is_below_row_sync_limit",
+        "context": { "row_sync_limit": 20000 }
+      }
+    },
+    {
+      "user": "plan:pro#subscriber",
+      "relation": "has_feature",
+      "object": "feature:advanced-page-analytics"
+    },
+    {
+      "user": "plan:pro#subscriber",
+      "relation": "has_feature",
+      "object": "feature:priority-support"
+    }
+  ]
+}

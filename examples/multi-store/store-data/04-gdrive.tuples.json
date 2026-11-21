@@ -1,0 +1,17 @@
+{
+  "tuple_keys": [
+    { "user": "user:alice",          "relation": "viewer",       "object": "document:readme" },
+    { "user": "user:alice",          "relation": "writer",       "object": "document:readme" },
+    { "user": "user:alice",          "relation": "owner",        "object": "document:readme" },
+    { "user": "user:alice",          "relation": "reader",       "object": "document:readme" },
+    { "user": "user:bob",            "relation": "viewer",       "object": "document:readme" },
+    { "user": "user:bob",            "relation": "reader",       "object": "document:readme" },
+    { "user": "organization:acme",   "relation": "organization", "object": "document:readme" },
+    { "user": "organization:acme",   "relation": "organization", "object": "document:design-doc" },
+    { "user": "user:carol",          "relation": "member",       "object": "organization:acme" },
+    { "user": "user:alice",          "relation": "member",       "object": "organization:acme" },
+    { "user": "user:bob",            "relation": "member",       "object": "organization:acme" },
+    { "user": "user:eve",            "relation": "reader",       "object": "document:readme" },
+    { "user": "user:frank",          "relation": "member",       "object": "organization:globex" }
+  ]
+}

@@ -1,0 +1,13 @@
+# Dépendances Node (uniquement utilisées par les outils de dev).
+node_modules/
+
+# Secrets et configuration locale (garder uniquement les .env.example).
+.env
+.env.*
+!.env.example
+
+# Logs et fichiers temporaires.
+*.log
+/tmp/
+config.yaml
+

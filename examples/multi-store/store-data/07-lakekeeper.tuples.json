@@ -1,0 +1,689 @@
+{
+  "tuple_keys": [
+    {
+      "user": "lakekeeper_generic_table:wh4_1/campaigns/external_data",
+      "relation": "child",
+      "object": "namespace:warehouse_4_1/campaigns"
+    },
+    {
+      "user": "lakekeeper_table:wh1_1/sales/orders",
+      "relation": "child",
+      "object": "namespace:warehouse_1_1/sales"
+    },
+    {
+      "user": "lakekeeper_table:wh1_2/analytics/customers",
+      "relation": "child",
+      "object": "namespace:warehouse_1_2/analytics"
+    },
+    {
+      "user": "lakekeeper_table:wh2_1/training/products",
+      "relation": "child",
+      "object": "namespace:warehouse_2_1/training"
+    },
+    {
+      "user": "lakekeeper_table:wh3_1/accounting/transactions",
+      "relation": "child",
+      "object": "namespace:warehouse_3_1/accounting"
+    },
+    {
+      "user": "lakekeeper_table:wh4_1/campaigns/events",
+      "relation": "child",
+      "object": "namespace:warehouse_4_1/campaigns"
+    },
+    {
+      "user": "lakekeeper_table:wh5_1/events/sessions",
+      "relation": "child",
+      "object": "namespace:warehouse_5_1/events"
+    },
+    {
+      "user": "lakekeeper_table:wh6_1/sandbox/users",
+      "relation": "child",
+      "object": "namespace:warehouse_6_1/sandbox"
+    },
+    {
+      "user": "lakekeeper_view:wh2_1/training/daily_summary",
+      "relation": "child",
+      "object": "namespace:warehouse_2_1/training"
+    },
+    {
+      "user": "lakekeeper_view:wh3_1/accounting/weekly_kpi",
+      "relation": "child",
+      "object": "namespace:warehouse_3_1/accounting"
+    },
+    {
+      "user": "namespace:warehouse_1_1/sales",
+      "relation": "namespace",
+      "object": "warehouse:warehouse_1_1"
+    },
+    {
+      "user": "namespace:warehouse_1_1/sales",
+      "relation": "parent",
+      "object": "lakekeeper_table:wh1_1/sales/orders"
+    },
+    {
+      "user": "namespace:warehouse_1_2/analytics",
+      "relation": "namespace",
+      "object": "warehouse:warehouse_1_2"
+    },
+    {
+      "user": "namespace:warehouse_1_2/analytics",
+      "relation": "parent",
+      "object": "lakekeeper_table:wh1_2/analytics/customers"
+    },
+    {
+      "user": "namespace:warehouse_2_1/training",
+      "relation": "namespace",
+      "object": "warehouse:warehouse_2_1"
+    },
+    {
+      "user": "namespace:warehouse_2_1/training",
+      "relation": "parent",
+      "object": "lakekeeper_table:wh2_1/training/products"
+    },
+    {
+      "user": "namespace:warehouse_2_1/training",
+      "relation": "parent",
+      "object": "lakekeeper_view:wh2_1/training/daily_summary"
+    },
+    {
+      "user": "namespace:warehouse_3_1/accounting",
+      "relation": "namespace",
+      "object": "warehouse:warehouse_3_1"
+    },
+    {
+      "user": "namespace:warehouse_3_1/accounting",
+      "relation": "parent",
+      "object": "lakekeeper_table:wh3_1/accounting/transactions"
+    },
+    {
+      "user": "namespace:warehouse_3_1/accounting",
+      "relation": "parent",
+      "object": "lakekeeper_view:wh3_1/accounting/weekly_kpi"
+    },
+    {
+      "user": "namespace:warehouse_4_1/campaigns",
+      "relation": "namespace",
+      "object": "warehouse:warehouse_4_1"
+    },
+    {
+      "user": "namespace:warehouse_4_1/campaigns",
+      "relation": "parent",
+      "object": "lakekeeper_generic_table:wh4_1/campaigns/external_data"
+    },
+    {
+      "user": "namespace:warehouse_4_1/campaigns",
+      "relation": "parent",
+      "object": "lakekeeper_table:wh4_1/campaigns/events"
+    },
+    {
+      "user": "namespace:warehouse_5_1/events",
+      "relation": "namespace",
+      "object": "warehouse:warehouse_5_1"
+    },
+    {
+      "user": "namespace:warehouse_5_1/events",
+      "relation": "parent",
+      "object": "lakekeeper_table:wh5_1/events/sessions"
+    },
+    {
+      "user": "namespace:warehouse_6_1/sandbox",
+      "relation": "namespace",
+      "object": "warehouse:warehouse_6_1"
+    },
+    {
+      "user": "namespace:warehouse_6_1/sandbox",
+      "relation": "parent",
+      "object": "lakekeeper_table:wh6_1/sandbox/users"
+    },
+    {
+      "user": "project:project_1",
+      "relation": "project",
+      "object": "role:analyst_p1"
+    },
+    {
+      "user": "project:project_1",
+      "relation": "project",
+      "object": "role:data_admin_p1"
+    },
+    {
+      "user": "project:project_1",
+      "relation": "project",
+      "object": "role:project_admin_p1"
+    },
+    {
+      "user": "project:project_1",
+      "relation": "project",
+      "object": "role:security_admin_p1"
+    },
+    {
+      "user": "project:project_1",
+      "relation": "project",
+      "object": "role:select_customers"
+    },
+    {
+      "user": "project:project_1",
+      "relation": "project",
+      "object": "role:select_orders"
+    },
+    {
+      "user": "project:project_1",
+      "relation": "project",
+      "object": "server:server_1"
+    },
+    {
+      "user": "project:project_1",
+      "relation": "project",
+      "object": "warehouse:warehouse_1_1"
+    },
+    {
+      "user": "project:project_1",
+      "relation": "project",
+      "object": "warehouse:warehouse_1_2"
+    },
+    {
+      "user": "project:project_2",
+      "relation": "project",
+      "object": "role:analyst_p2"
+    },
+    {
+      "user": "project:project_2",
+      "relation": "project",
+      "object": "role:data_admin_p2"
+    },
+    {
+      "user": "project:project_2",
+      "relation": "project",
+      "object": "role:project_admin_p2"
+    },
+    {
+      "user": "project:project_2",
+      "relation": "project",
+      "object": "role:security_admin_p2"
+    },
+    {
+      "user": "project:project_2",
+      "relation": "project",
+      "object": "role:select_events"
+    },
+    {
+      "user": "project:project_2",
+      "relation": "project",
+      "object": "server:server_1"
+    },
+    {
+      "user": "project:project_2",
+      "relation": "project",
+      "object": "warehouse:warehouse_2_1"
+    },
+    {
+      "user": "project:project_2",
+      "relation": "project",
+      "object": "warehouse:warehouse_2_2"
+    },
+    {
+      "user": "project:project_3",
+      "relation": "project",
+      "object": "role:analyst_p3"
+    },
+    {
+      "user": "project:project_3",
+      "relation": "project",
+      "object": "role:data_admin_p3"
+    },
+    {
+      "user": "project:project_3",
+      "relation": "project",
+      "object": "role:project_admin_p3"
+    },
+    {
+      "user": "project:project_3",
+      "relation": "project",
+      "object": "role:security_admin_p3"
+    },
+    {
+      "user": "project:project_3",
+      "relation": "project",
+      "object": "server:server_1"
+    },
+    {
+      "user": "project:project_3",
+      "relation": "project",
+      "object": "warehouse:warehouse_3_1"
+    },
+    {
+      "user": "project:project_4",
+      "relation": "project",
+      "object": "role:analyst_p4"
+    },
+    {
+      "user": "project:project_4",
+      "relation": "project",
+      "object": "role:project_admin_p4"
+    },
+    {
+      "user": "project:project_4",
+      "relation": "project",
+      "object": "server:server_2"
+    },
+    {
+      "user": "project:project_4",
+      "relation": "project",
+      "object": "warehouse:warehouse_4_1"
+    },
+    {
+      "user": "project:project_5",
+      "relation": "project",
+      "object": "role:analyst_p5"
+    },
+    {
+      "user": "project:project_5",
+      "relation": "project",
+      "object": "role:project_admin_p5"
+    },
+    {
+      "user": "project:project_5",
+      "relation": "project",
+      "object": "server:server_2"
+    },
+    {
+      "user": "project:project_5",
+      "relation": "project",
+      "object": "warehouse:warehouse_5_1"
+    },
+    {
+      "user": "project:project_6",
+      "relation": "project",
+      "object": "role:analyst_p6"
+    },
+    {
+      "user": "project:project_6",
+      "relation": "project",
+      "object": "role:data_admin_p6"
+    },
+    {
+      "user": "project:project_6",
+      "relation": "project",
+      "object": "role:project_admin_p6"
+    },
+    {
+      "user": "project:project_6",
+      "relation": "project",
+      "object": "server:server_3"
+    },
+    {
+      "user": "project:project_6",
+      "relation": "project",
+      "object": "warehouse:warehouse_6_1"
+    },
+    {
+      "user": "role:*",
+      "relation": "managed_access",
+      "object": "warehouse:warehouse_1_2"
+    },
+    {
+      "user": "role:*",
+      "relation": "managed_access",
+      "object": "warehouse:warehouse_2_2"
+    },
+    {
+      "user": "role:*",
+      "relation": "managed_access",
+      "object": "warehouse:warehouse_3_1"
+    },
+    {
+      "user": "role:*",
+      "relation": "managed_access",
+      "object": "warehouse:warehouse_4_1"
+    },
+    {
+      "user": "role:*",
+      "relation": "managed_access",
+      "object": "warehouse:warehouse_6_1"
+    },
+    {
+      "user": "role:data_admin_p1#assignee",
+      "relation": "modify",
+      "object": "lakekeeper_table:wh1_1/sales/orders"
+    },
+    {
+      "user": "role:data_admin_p2#assignee",
+      "relation": "modify",
+      "object": "lakekeeper_table:wh2_1/ml-warehouse/training"
+    },
+    {
+      "user": "role:security_admin_p1#assignee",
+      "relation": "describe",
+      "object": "namespace:warehouse_1_1/sales"
+    },
+    {
+      "user": "role:security_admin_p1#assignee",
+      "relation": "describe",
+      "object": "namespace:warehouse_1_2/analytics"
+    },
+    {
+      "user": "role:select_customers#assignee",
+      "relation": "select",
+      "object": "lakekeeper_table:wh1_2/analytics/customers"
+    },
+    {
+      "user": "role:select_events#assignee",
+      "relation": "select",
+      "object": "lakekeeper_table:wh2_1/training/products"
+    },
+    {
+      "user": "role:select_orders#assignee",
+      "relation": "select",
+      "object": "lakekeeper_table:wh1_1/sales/orders"
+    },
+    {
+      "user": "server:server_1",
+      "relation": "server",
+      "object": "project:project_1"
+    },
+    {
+      "user": "server:server_1",
+      "relation": "server",
+      "object": "project:project_2"
+    },
+    {
+      "user": "server:server_1",
+      "relation": "server",
+      "object": "project:project_3"
+    },
+    {
+      "user": "server:server_2",
+      "relation": "server",
+      "object": "project:project_4"
+    },
+    {
+      "user": "server:server_2",
+      "relation": "server",
+      "object": "project:project_5"
+    },
+    {
+      "user": "server:server_3",
+      "relation": "server",
+      "object": "project:project_6"
+    },
+    {
+      "user": "user:*",
+      "relation": "managed_access",
+      "object": "warehouse:warehouse_1_2"
+    },
+    {
+      "user": "user:*",
+      "relation": "managed_access",
+      "object": "warehouse:warehouse_2_2"
+    },
+    {
+      "user": "user:*",
+      "relation": "managed_access",
+      "object": "warehouse:warehouse_3_1"
+    },
+    {
+      "user": "user:*",
+      "relation": "managed_access",
+      "object": "warehouse:warehouse_4_1"
+    },
+    {
+      "user": "user:*",
+      "relation": "managed_access",
+      "object": "warehouse:warehouse_6_1"
+    },
+    {
+      "user": "user:admin",
+      "relation": "admin",
+      "object": "server:server_1"
+    },
+    {
+      "user": "user:admin",
+      "relation": "assignee",
+      "object": "role:server_admin"
+    },
+    {
+      "user": "user:alice",
+      "relation": "assignee",
+      "object": "role:data_admin_p1"
+    },
+    {
+      "user": "user:alice",
+      "relation": "assignee",
+      "object": "role:project_admin_p1"
+    },
+    {
+      "user": "user:arthur",
+      "relation": "ownership",
+      "object": "lakekeeper_table:wh1_1/sales/orders"
+    },
+    {
+      "user": "user:beatrice",
+      "relation": "ownership",
+      "object": "lakekeeper_table:wh3_1/accounting/transactions"
+    },
+    {
+      "user": "user:bob",
+      "relation": "assignee",
+      "object": "role:data_admin_p2"
+    },
+    {
+      "user": "user:bob",
+      "relation": "assignee",
+      "object": "role:project_admin_p2"
+    },
+    {
+      "user": "user:carol",
+      "relation": "assignee",
+      "object": "role:project_admin_p3"
+    },
+    {
+      "user": "user:carol",
+      "relation": "assignee",
+      "object": "role:security_admin_p3"
+    },
+    {
+      "user": "user:dave",
+      "relation": "assignee",
+      "object": "role:project_admin_p4"
+    },
+    {
+      "user": "user:eve",
+      "relation": "assignee",
+      "object": "role:project_admin_p5"
+    },
+    {
+      "user": "user:frank",
+      "relation": "assignee",
+      "object": "role:data_admin_p6"
+    },
+    {
+      "user": "user:frank",
+      "relation": "assignee",
+      "object": "role:project_admin_p6"
+    },
+    {
+      "user": "user:grace",
+      "relation": "assignee",
+      "object": "role:data_admin_p1"
+    },
+    {
+      "user": "user:grace",
+      "relation": "assignee",
+      "object": "role:security_admin_p1"
+    },
+    {
+      "user": "user:henry",
+      "relation": "assignee",
+      "object": "role:data_admin_p2"
+    },
+    {
+      "user": "user:jack",
+      "relation": "assignee",
+      "object": "role:analyst_p1"
+    },
+    {
+      "user": "user:jack",
+      "relation": "assignee",
+      "object": "role:analyst_p2"
+    },
+    {
+      "user": "user:jack",
+      "relation": "assignee",
+      "object": "role:select_events"
+    },
+    {
+      "user": "user:jack",
+      "relation": "assignee",
+      "object": "role:select_orders"
+    },
+    {
+      "user": "user:jack",
+      "relation": "ownership",
+      "object": "role:select_orders"
+    },
+    {
+      "user": "user:kate",
+      "relation": "assignee",
+      "object": "role:analyst_p1"
+    },
+    {
+      "user": "user:kate",
+      "relation": "assignee",
+      "object": "role:select_customers"
+    },
+    {
+      "user": "user:liam",
+      "relation": "assignee",
+      "object": "role:analyst_p3"
+    },
+    {
+      "user": "user:liam",
+      "relation": "assignee",
+      "object": "role:analyst_p4"
+    },
+    {
+      "user": "user:mia",
+      "relation": "assignee",
+      "object": "role:analyst_p5"
+    },
+    {
+      "user": "user:mia",
+      "relation": "assignee",
+      "object": "role:analyst_p6"
+    },
+    {
+      "user": "user:operator",
+      "relation": "assignee",
+      "object": "role:server_operator"
+    },
+    {
+      "user": "user:operator",
+      "relation": "operator",
+      "object": "server:server_1"
+    },
+    {
+      "user": "user:peter",
+      "relation": "assignee",
+      "object": "role:analyst_p2"
+    },
+    {
+      "user": "user:sam",
+      "relation": "ownership",
+      "object": "warehouse:warehouse_1_1"
+    },
+    {
+      "user": "user:tina",
+      "relation": "ownership",
+      "object": "warehouse:warehouse_2_1"
+    },
+    {
+      "user": "user:victor",
+      "relation": "ownership",
+      "object": "namespace:warehouse_1_1/sales"
+    },
+    {
+      "user": "user:wendy",
+      "relation": "ownership",
+      "object": "namespace:warehouse_1_2/analytics"
+    },
+    {
+      "user": "user:xavier",
+      "relation": "ownership",
+      "object": "namespace:warehouse_2_1/training"
+    },
+    {
+      "user": "warehouse:warehouse_1_1",
+      "relation": "parent",
+      "object": "namespace:warehouse_1_1/sales"
+    },
+    {
+      "user": "warehouse:warehouse_1_1",
+      "relation": "warehouse",
+      "object": "project:project_1"
+    },
+    {
+      "user": "warehouse:warehouse_1_2",
+      "relation": "parent",
+      "object": "namespace:warehouse_1_2/analytics"
+    },
+    {
+      "user": "warehouse:warehouse_1_2",
+      "relation": "warehouse",
+      "object": "project:project_1"
+    },
+    {
+      "user": "warehouse:warehouse_2_1",
+      "relation": "parent",
+      "object": "namespace:warehouse_2_1/training"
+    },
+    {
+      "user": "warehouse:warehouse_2_1",
+      "relation": "warehouse",
+      "object": "project:project_2"
+    },
+    {
+      "user": "warehouse:warehouse_2_2",
+      "relation": "warehouse",
+      "object": "project:project_2"
+    },
+    {
+      "user": "warehouse:warehouse_3_1",
+      "relation": "parent",
+      "object": "namespace:warehouse_3_1/accounting"
+    },
+    {
+      "user": "warehouse:warehouse_3_1",
+      "relation": "warehouse",
+      "object": "project:project_3"
+    },
+    {
+      "user": "warehouse:warehouse_4_1",
+      "relation": "parent",
+      "object": "namespace:warehouse_4_1/campaigns"
+    },
+    {
+      "user": "warehouse:warehouse_4_1",
+      "relation": "warehouse",
+      "object": "project:project_4"
+    },
+    {
+      "user": "warehouse:warehouse_5_1",
+      "relation": "parent",
+      "object": "namespace:warehouse_5_1/events"
+    },
+    {
+      "user": "warehouse:warehouse_5_1",
+      "relation": "warehouse",
+      "object": "project:project_5"
+    },
+    {
+      "user": "warehouse:warehouse_6_1",
+      "relation": "parent",
+      "object": "namespace:warehouse_6_1/sandbox"
+    },
+    {
+      "user": "warehouse:warehouse_6_1",
+      "relation": "warehouse",
+      "object": "project:project_6"
+    }
+  ]
+}

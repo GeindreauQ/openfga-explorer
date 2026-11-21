@@ -1,0 +1,110 @@
+# Chaîne de livraison d'openfga-explorer sur GitLab :
+#   1. test    : gofmt, go vet et tests du serveur ; tests unitaires du front
+#                (vitest : DSL, générateurs de code) ; suite Playwright de
+#                bout en bout contre un OpenFGA en service (tests/e2e.sh) ;
+#   2. build   : image construite à chaque MR (validation), poussée sur main
+#                dans le registre GitLab du projet, taguée au SHA court ;
+#   3. deploy  : mise à jour de explorer.image.tag dans le dépôt infra-as-code
+#                (merge request par défaut). ArgoCD déploie une fois mergé.
+#
+# Le workflow GitHub (.github/workflows/ci.yml) reste celui du dépôt public.
+#
+# Variables CI/CD à définir (Settings > CI/CD > Variables) :
+#   INFRA_REPO         URL SSH du dépôt infra-as-code.
+#   INFRA_DEPLOY_KEY   (masquée, protégée) clé privée SSH encodée en base64,
+#                      dont la clé publique est une deploy key avec droit
+#                      d'écriture sur infra-as-code.
+#   INFRA_UPDATE_MODE  optionnelle : merge_request (défaut) | commit (push direct sur main).
+stages: [test, build, deploy]
+
+variables:
+  IMAGE: $CI_REGISTRY_IMAGE
+  INFRA_BRANCH: main
+  INFRA_VALUES_FILE: openfga/Values.yaml
+  INFRA_IMAGE_KEY: explorer
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+test-server:
+  stage: test
+  image: golang:1.25-alpine
+  variables:
+    GOPATH: $CI_PROJECT_DIR/.go
+  cache:
+    key:
+      files: [src/server/go.sum]
+    paths: [.go/pkg/mod/]
+  script:
+    - cd src/server
+    - test -z "$(gofmt -l .)" || { gofmt -d .; exit 1; }
+    - go vet ./...
+    - go test ./...
+    # Binaire statique pour la suite e2e (l'image Playwright n'a pas Go).
+    - CGO_ENABLED=0 go build -o "$CI_PROJECT_DIR/explorer" .
+  artifacts:
+    paths: [explorer]
+    expire_in: 1 day
+
+test-web:
+  stage: test
+  image: node:24-alpine
+  cache:
+    key:
+      files: [tests/package-lock.json]
+    paths: [.npm/]
+  script:
+    - cd tests
+    # Playwright n'est pas utile aux tests unitaires : pas de téléchargement de navigateurs.
+    - PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --cache "$CI_PROJECT_DIR/.npm" --prefer-offline
+    - npx vitest run
+
+test-e2e:
+  stage: test
+  image: mcr.microsoft.com/playwright:v1.61.0-noble   # même version que tests/package-lock.json
+  needs: [test-server]
+  services:
+    - name: openfga/openfga:v1.22.1
+      alias: openfga
+      command: [run]
+  variables:
+    OPENFGA_URL: http://openfga:8080
+    EXPLORER_BIN: $CI_PROJECT_DIR/explorer
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"   # navigateurs fournis par l'image
+  cache:
+    key:
+      files: [tests/package-lock.json]
+    paths: [.npm/]
+  script:
+    - (cd tests && npm ci --cache "$CI_PROJECT_DIR/.npm" --prefer-offline)
+    - sh tests/e2e.sh
+
+build:
+  stage: build
+  image: docker:28
+  services: [docker:28-dind]
+  needs: [test-server, test-web, test-e2e]
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    # Cache de couches : réutilise la dernière image publiée si elle existe.
+    - docker pull "$IMAGE:latest" || true
+    - docker build --cache-from "$IMAGE:latest" -t "$IMAGE:$CI_COMMIT_SHORT_SHA" -t "$IMAGE:latest" .
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "$CI_DEFAULT_BRANCH" ]; then
+        docker push "$IMAGE:$CI_COMMIT_SHORT_SHA"
+        docker push "$IMAGE:latest"
+      fi
+
+update-infra:
+  stage: deploy
+  image: alpine:3.22
+  needs: [build]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $INFRA_DEPLOY_KEY
+  resource_group: infra-update   # une mise à jour à la fois (pas de course sur Values.yaml)
+  before_script:
+    - apk add --no-cache git openssh-client
+  script:
+    - sh scripts/update-infra.sh "$CI_COMMIT_SHORT_SHA"

@@ -1,0 +1,14 @@
+{
+  "tuple_keys": [
+    { "user": "user:alice",            "relation": "admin",     "object": "repo:backend" },
+    { "user": "user:bob",              "relation": "writer",    "object": "repo:backend" },
+    { "user": "user:carol",            "relation": "reader",    "object": "repo:backend" },
+    { "user": "user:dan",              "relation": "triager",   "object": "repo:backend" },
+    { "user": "organization:acme",     "relation": "owner",     "object": "repo:backend" },
+    { "user": "user:frank",            "relation": "member",    "object": "team:platform" },
+    { "user": "team:platform#member",  "relation": "writer",    "object": "repo:backend" },
+    { "user": "user:eve",              "relation": "member",    "object": "organization:acme" },
+    { "user": "user:eve",              "relation": "repo_admin", "object": "organization:acme" },
+    { "user": "user:frank",            "relation": "member",    "object": "organization:acme" }
+  ]
+}

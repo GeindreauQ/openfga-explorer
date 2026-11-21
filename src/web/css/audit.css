@@ -1,0 +1,689 @@
+/* ── Audit page (thème clair, cohérent avec la home) ───────────────── */
+
+/* Tabs alignés à gauche, padding consistant avec le header. */
+.audit-tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border-weak);
+  background: var(--bg-primary);
+  flex-shrink: 0; /* ne pas se faire écraser par le split qui a flex:1 */
+}
+
+.audit-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+
+.audit-tab:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.audit-tab.active {
+  background: var(--bg-tertiary, var(--bg-hover));
+  color: var(--accent-fg);
+  border-color: var(--border-weak);
+  border-bottom-color: var(--bg-tertiary, var(--border-mid));
+  margin-bottom: -1px;
+  font-weight: 600;
+}
+
+.audit-tab-hint {
+  color: var(--text-tertiary);
+  font-size: 11px;
+  margin-left: 4px;
+}
+
+/* Conteneur du formulaire : pas de padding ici, c'est le pane qui le
+   gère (pour avoir le même rendu que les résultats à droite). */
+.audit-content {
+  background: transparent;
+}
+
+.audit-mode-hint {
+  margin: 0 0 14px 0;
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  border-left: 3px solid var(--accent-2);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.audit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.audit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.audit-field label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--text-secondary);
+}
+
+.audit-field input,
+.audit-field select,
+.audit-field textarea {
+  padding: 8px 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.audit-field input:focus,
+.audit-field select:focus,
+.audit-field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.audit-field textarea {
+  font-family: var(--mono);
+  font-size: 12px;
+  resize: vertical;
+}
+
+.audit-field-context textarea {
+  min-height: 60px;
+}
+
+.audit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.audit-result {
+  margin-top: 8px;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  min-height: 40px;
+}
+
+.audit-verdict {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.audit-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.audit-badge-ok {
+  background: color-mix(in srgb, var(--success) 15%, transparent);
+  color: color-mix(in srgb, var(--success) 100%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success) 35%, transparent);
+}
+
+.audit-badge-ko {
+  background: color-mix(in srgb, var(--danger) 15%, transparent);
+  color: color-mix(in srgb, var(--danger) 100%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+}
+
+.audit-tuple {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-weak);
+  display: inline-block;
+  word-break: break-all;
+}
+
+.audit-result-header {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 8px;
+}
+
+.audit-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.audit-list li {
+  padding: 6px 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-weak);
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.audit-list-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.audit-list-row > code { flex: 1 1 auto; min-width: 0; word-break: break-all; }
+
+.audit-empty {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-style: italic;
+  margin: 0;
+}
+
+/* ── Audit : input row "type:id" façon manage-tuple ──────────────────── */
+
+.audit-input-row {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.audit-input-row > .audit-type-select {
+  flex: 0 0 auto;
+  min-width: 110px;
+  max-width: 160px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.audit-input-row > input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.audit-colon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-tertiary);
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 0 2px;
+}
+
+.audit-field .hint {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.audit-input-row + .hint,
+.audit-field > .hint {
+  margin-top: 4px;
+}
+
+/* ── Audit v2 : layout 2 colonnes + flèches + combobox relation ────── */
+
+/* Sujet, relation, objet : empilés dans un panneau étroit, sur une ligne
+   (avec les flèches) quand le panneau est assez large. */
+.audit-pane-form {
+  container-type: inline-size;
+}
+.audit-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+.audit-grid .audit-field-arrow {
+  display: none;
+}
+@container (min-width: 760px) {
+  .audit-grid {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, .8fr) auto minmax(0, 1fr);
+    gap: 14px 12px;
+  }
+  .audit-grid .audit-field-arrow {
+    display: flex;
+  }
+}
+
+.audit-field-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 26px;
+  pointer-events: none;
+}
+
+.audit-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-weak);
+  color: var(--text-tertiary);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.audit-field label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.audit-field label i {
+  color: var(--accent);
+  font-size: 12px;
+  opacity: .7;
+}
+
+/* Input-group "type:id" : un seul bloc visuel unifié. */
+.audit-input-row {
+  display: flex;
+  align-items: stretch;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: border-color .15s;
+}
+
+.audit-input-row:focus-within {
+  border-color: var(--accent);
+}
+
+.audit-input-row > .audit-type-select {
+  flex: 0 0 auto;
+  min-width: 110px;
+  max-width: 170px;
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--bg-secondary);
+  border: none;
+  border-right: 1px solid var(--border-weak);
+  border-radius: 0;
+  padding-left: 8px;
+  padding-right: 6px;
+  color: var(--text-primary);
+  appearance: none;
+  cursor: pointer;
+}
+
+.audit-input-row > .audit-type-select:focus {
+  outline: none;
+  background: var(--bg-tertiary);
+}
+
+.audit-input-row > .audit-colon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-tertiary);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 0 6px;
+}
+
+.audit-input-row > input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 8px 10px;
+  color: var(--text-primary);
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.audit-input-row > input:focus {
+  outline: none;
+}
+
+/* Combobox de relation : input + datalist + bouton toggle. */
+.audit-relation-wrap {
+  display: flex;
+  align-items: stretch;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: border-color .15s;
+}
+
+.audit-relation-wrap:focus-within {
+  border-color: var(--accent);
+}
+
+.audit-relation-wrap > input {
+  flex: 1 1 auto;
+  border: none;
+  background: transparent;
+  padding: 8px 10px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.audit-relation-wrap > input:focus {
+  outline: none;
+}
+
+.audit-relation-toggle {
+  flex: 0 0 auto;
+  background: var(--bg-secondary);
+  border: none;
+  border-left: 1px solid var(--border-weak);
+  padding: 0 12px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+
+.audit-relation-toggle:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.audit-relation-toggle.active {
+  background: var(--accent);
+  color: white;
+}
+
+/* Bouton inline dans le hint (quand 0 relation). */
+.audit-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+  font: inherit;
+}
+
+.audit-link-btn:hover {
+  color: var(--text-primary);
+}
+
+/* Bloc CEL repliable (default collapsed pour ne pas surcharger). */
+.audit-context-details {
+  margin-top: 4px;
+  border: 1px solid var(--border-weak);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+}
+
+.audit-context-details summary {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-secondary);
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.audit-context-details summary::marker { content: ''; }
+
+.audit-context-details summary::before {
+  content: '▸';
+  font-size: 10px;
+  transition: transform .15s;
+  color: var(--text-tertiary);
+}
+
+.audit-context-details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.audit-context-details textarea {
+  display: block;
+  width: calc(100% - 16px);
+  margin: 0 8px 8px 8px;
+  padding: 8px 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: var(--mono);
+  font-size: 12px;
+  resize: vertical;
+}
+
+/* ── Audit "Why" : arbre de résolution ────────────────────────────── */
+
+.audit-tree {
+  list-style: none;
+  margin: 12px 0 0 0;
+  padding: 0;
+}
+
+.audit-tree-leaf {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-weak);
+  border-radius: 6px;
+  margin-bottom: 4px;
+  font-family: var(--mono);
+  position: relative;
+  transition: border-color .15s ease;
+}
+
+.audit-tree-leaf:hover {
+  border-color: var(--accent);
+}
+
+/* Coloration syntaxique des 3 parties d'un tuple OpenFGA :
+   sujet (user/userset) + relation + objet. On distingue aussi
+   le tuple source (fait brut dans le store) du tuple cible
+   (celui qui satisfait la requête) par une bordure et un fond. */
+
+.audit-tree-subject {
+  color: var(--info);          /* bleu : "qui" */
+  font-weight: 600;
+  background: color-mix(in srgb, var(--info) 8%, transparent);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.audit-tree-arrow {
+  color: var(--text-tertiary);
+  font-weight: 700;
+}
+
+.audit-tree-rel {
+  color: var(--accent-fg);           /* violet : la relation */
+  font-weight: 600;
+  font-style: italic;
+  background: color-mix(in srgb, var(--accent-2) 8%, transparent);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.audit-tree-object {
+  color: var(--success);           /* vert : "quoi" */
+  font-weight: 600;
+  background: color-mix(in srgb, var(--success) 8%, transparent);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* Tuple source = premier de la chaîne = le fait observable dans le
+   store (alice → assignee → role:foo). Marqué d'une bordure verte. */
+.audit-tree-source {
+  border-color: color-mix(in srgb, var(--success) 35%, transparent);
+  border-left: 3px solid var(--success);
+}
+.audit-tree-source .audit-tree-subject {
+  color: var(--success);
+}
+
+/* Tuple cible = dernier = celui qui satisfait la requête.
+   Bordure bleue (accent). */
+.audit-tree-target {
+  border-color: color-mix(in srgb, var(--info) 35%, transparent);
+  border-left: 3px solid var(--info);
+}
+.audit-tree-target .audit-tree-object {
+  color: var(--info);
+}
+
+/* Tuple intermédiaire (rare, ex: 3-tuples via userset imbriqué). */
+.audit-tree-middle {
+  border-left: 3px solid var(--border-weak);
+}
+
+/* Légende du "Pourquoi ?" — explique comment lire le chemin. */
+.audit-why-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-weak);
+  font-size: 11px;
+}
+.audit-why-legend .audit-tree-leaf {
+  margin: 0 4px 0 0;
+  font-size: 11px;
+  padding: 3px 6px;
+}
+
+/* ── Audit : section "Pourquoi ?" + boutons inline par item ─────────── */
+
+/* Section globale (Check) : titre + arbre en dessous du verdict. */
+.audit-why-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-weak);
+  border-radius: 10px;
+}
+
+/* Quand l'arbre est imbriqué dans une section Why ou un détail
+   inline, on retire la marge du haut — c'est le conteneur qui gère
+   l'espacement. */
+.audit-why-section .audit-tree,
+.audit-why-detail .audit-tree { margin-top: 0; }
+
+.audit-why-title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.audit-why-title i { color: var(--accent-fg); }
+
+/* Bouton "Pourquoi ?" inline (par item de liste Reverse/Forward). */
+.audit-why-btn {
+  flex: 0 0 auto;
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid var(--border-weak);
+  color: var(--text-secondary);
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: background .15s, color .15s, border-color .15s;
+}
+
+.audit-why-btn i { font-size: 12px; }
+
+.audit-why-btn:hover {
+  background: var(--accent-glow);
+  border-color: var(--accent-2);
+  color: var(--accent-fg);
+}
+
+.audit-why-btn.active {
+  background: var(--accent-2);
+  border-color: var(--accent-2);
+  color: var(--accent-contrast);
+}
+
+/* Conteneur inline du chemin de résolution (s'ouvre sous la ligne). */
+.audit-why-detail {
+  margin-top: 2px;
+  padding: 8px 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-weak);
+  border-radius: 6px;
+  font-size: 11.5px;
+}
+
+.audit-why-detail[hidden] { display: none; }
+
+.audit-why-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 0;
+}
+.audit-tree-leaf.audit-depth-0 { margin-left: 0px; }
+.audit-tree-leaf.audit-depth-1 { margin-left: 20px; }
+.audit-tree-leaf.audit-depth-2 { margin-left: 40px; }
+.audit-tree-leaf.audit-depth-3 { margin-left: 60px; }
+.audit-tree-leaf.audit-depth-4 { margin-left: 80px; }
+.audit-tree-leaf.audit-depth-5 { margin-left: 100px; }
+.audit-tree-leaf.audit-depth-6 { margin-left: 120px; }
+.audit-tree-leaf.audit-depth-7 { margin-left: 140px; }
+.audit-tree-leaf.audit-depth-8 { margin-left: 160px; }

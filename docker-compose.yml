@@ -1,0 +1,37 @@
+services:
+  openfga:
+    image: openfga/openfga:v1.22.1
+    container_name: openfga
+    command: ["run"]
+    environment:
+      OPENFGA_DATASTORE_ENGINE: memory
+      OPENFGA_LOG_LEVEL: info
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    restart: unless-stopped
+  explorer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: openfga-explorer:v1
+    container_name: openfga-explorer
+    # config.yaml (thème, réglages) est facultatif : copier
+    # config.yaml.example en config.yaml, puis décommenter les deux lignes
+    # ci-dessous. Monter un fichier absent ferait créer un répertoire par Docker.
+    # command: ["--config=/etc/openfga-explorer/config.yaml"]
+    environment:
+      ADDR: ":8000"
+      WEB_DIR: "/app/web"
+      VIEWS_DIR: "/app/views"
+      OPENFGA_URL: "http://openfga:8080"
+      # Démo locale uniquement : remplacer pour tout autre usage.
+      SESSION_SECRET: changemechangemechangemechangemechangemechangeme
+    # volumes:
+    #   - ./config.yaml:/etc/openfga-explorer/config.yaml:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      - openfga
+    restart: unless-stopped
+  

@@ -1,0 +1,46 @@
+{
+  "name": "openfga-explorer-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Tests unitaires (vitest) et suite de bout en bout (Playwright), outils de chargement des exemples",
+  "scripts": {
+    "test": "node run_all.mjs",
+    "test:unit": "vitest run",
+    "test:stores": "node test_stores.mjs",
+    "test:oauth": "node test_oauth_flow.mjs",
+    "test:home": "node test_home_dashboard.mjs",
+    "test:dsl": "node test_dsl.mjs",
+    "test:assertions": "node test_assertions.mjs",
+    "test:model-history": "node test_model_history.mjs",
+    "test:rate-limit": "node test_rate_limit.mjs",
+    "test:cookies": "node test_secure_cookies.mjs",
+    "test:audit": "node test_audit.mjs",
+    "test:import-export": "node test_import_export.mjs",
+    "test:diff": "node test_diff.mjs",
+    "test:url-state": "node test_url_state.mjs",
+    "test:import-preview": "node test_import_preview.mjs",
+    "test:virtualization": "node test_virtualization.mjs",
+    "test:lint": "node test_lint.mjs",
+    "test:graph-algos": "node test_graph_algorithms.mjs",
+    "test:pending": "node test_pending_buffer.mjs",
+    "test:codegen": "node test_codegen.mjs",
+    "test:store-diff": "node test_store_diff.mjs",
+    "test:dsl-all": "node test_dsl_all_models.mjs",
+    "test:examples": "node tools/test-examples.mjs",
+    "test:checks": "node tools/test-checks.mjs",
+    "seed:examples": "node tools/seed-examples.mjs",
+    "test:e2e": "sh e2e.sh",
+    "test:graph-focus": "node test_graph_focus.mjs",
+    "test:graph-fallback": "node test_graph_fallback.mjs",
+    "test:sse-live": "node test_sse_live.mjs"
+  },
+  "dependencies": {
+    "@openfga/sdk": "^0.9.6",
+    "@openfga/syntax-transformer": "^0.2.1"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0",
+    "vitest": "^2.0.0"
+  }
+}

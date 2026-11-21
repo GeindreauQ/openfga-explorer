@@ -1,0 +1,56 @@
+# Blueprint Authentik pour OpenFGA-Explorer.
+#
+# Montée par docker-compose dans /blueprints sur le container `worker`.
+# L'admin `akadmin` est créé automatiquement par `AUTHENTIK_BOOTSTRAP_PASSWORD`
+# (cf. exemples/authentik.yaml) — on ne le re-déclare PAS ici pour éviter un
+# conflit avec le hash seedé par le serveur.
+#
+# Application : OpenFGA-Explorer (slug `open-fga-explorer`)
+# Provider OIDC :
+#   - issuer_mode: per_provider (par défaut) → iss = ${AUTHENTIK_URL}/application/o/open-fga-explorer/
+#   - JWKS + discovery servis sous ce même préfixe par authentik
+#   - redirect_uri doit matcher exactement celui envoyé par le RP (cf. OIDC_REDIRECT_URL)
+version: 1
+metadata:
+  name: Bootstrap - OpenFGA-Explorer OIDC provider + application
+entries:
+  - id: openfga-provider
+    attrs:
+      access_code_validity: minutes=1
+      access_token_validity: minutes=5
+      authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-explicit-consent]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+      signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
+      client_type: confidential
+      include_claims_in_id_token: true
+      client_id: openfga
+      client_secret: sup3r_s3cr3t
+      grant_types:
+        - authorization_code
+        - refresh_token
+      issuer_mode: per_provider
+      sub_mode: hashed_user_id
+      redirect_uris:
+        - matching_mode: strict
+          url: http://localhost:8000/auth/callback
+      property_mappings:
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-openid]]
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-email]]
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-profile]]
+      name: Provider for OpenFGA-Explorer
+    identifiers:
+      name: Provider for OpenFGA-Explorer
+    model: authentik_providers_oauth2.oauth2provider
+    state: present
+
+  # --- Application OpenFGA-Explorer (lie l'UI au provider ci-dessus) ---
+  - attrs:
+      name: OpenFGA-Explorer
+      slug: open-fga-explorer
+      open_in_new_tab: false
+      policy_engine_mode: any
+      provider: !KeyOf openfga-provider
+    identifiers:
+      slug: open-fga-explorer
+    model: authentik_core.application
+    state: present

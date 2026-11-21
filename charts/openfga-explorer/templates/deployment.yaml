@@ -1,0 +1,141 @@
+{{- $port := .Values.addr | trimPrefix ":" | int -}}
+{{- $cfgMount := false -}}
+{{- if .Values.tuning }}{{- $cfgMount = true }}{{- end -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "openfga-explorer.fullname" . }}
+  labels:
+    {{- include "openfga-explorer.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "openfga-explorer.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "openfga-explorer.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "openfga-explorer.serviceAccountName" . }}
+      automountServiceAccountToken: false
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ $port }}
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ include "openfga-explorer.fullname" . }}
+          env:
+            {{- if include "openfga-explorer.hasToken" . }}
+            - name: OPENFGA_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "openfga-explorer.tokenSecretName" . }}
+                  key: {{ include "openfga-explorer.tokenSecretKey" . }}
+            {{- end }}
+            {{- if include "openfga-explorer.hasSessionSecret" . }}
+            - name: SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "openfga-explorer.sessionSecretName" . }}
+                  key: {{ include "openfga-explorer.sessionSecretKey" . }}
+            {{- end }}
+            {{- if include "openfga-explorer.hasAdminPassword" . }}
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "openfga-explorer.adminPasswordSecretName" . }}
+                  key: {{ include "openfga-explorer.adminPasswordSecretKey" . }}
+            {{- end }}
+            {{- with .Values.oidc }}
+            {{- if and .issuerUrl (or .clientSecret .existingSecret) }}
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .existingSecret | default (include "openfga-explorer.fullname" $) }}
+                  key: {{ ternary .existingSecretKey "oidc-client-secret" (ne .existingSecret "") }}
+            {{- end }}
+            {{- end }}
+            {{- with .Values.openfga.oidc }}
+            {{- if .tokenUrl }}
+            {{- if or .clientSecret .existingSecret }}
+            - name: OPENFGA_OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .existingSecret | default (include "openfga-explorer.fullname" $) }}
+                  key: {{ ternary .existingSecretClientSecretKey "openfga-oidc-client-secret" (ne .existingSecret "") }}
+                  optional: {{ ne .existingSecret "" }}
+            {{- end }}
+            {{- if or .password (and .existingSecret .username) }}
+            - name: OPENFGA_OIDC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .existingSecret | default (include "openfga-explorer.fullname" $) }}
+                  key: {{ ternary .existingSecretPasswordKey "openfga-oidc-password" (ne .existingSecret "") }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+          args:
+            {{- if $cfgMount }}
+            - --config=/etc/openfga-explorer/config.yaml
+            {{- end }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            {{- if $cfgMount }}
+            - name: config
+              mountPath: /etc/openfga-explorer
+              readOnly: true
+            {{- end }}
+      volumes:
+        # readOnlyRootFilesystem activé : /tmp en emptyDir inscriptible.
+        - name: tmp
+          emptyDir: {}
+        {{- if $cfgMount }}
+        - name: config
+          configMap:
+            name: {{ include "openfga-explorer.fullname" . }}
+            items:
+              - key: config.yaml
+                path: config.yaml
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

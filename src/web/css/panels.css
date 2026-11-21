@@ -1,0 +1,352 @@
+/* === STORE DIFF === */
+.store-diff-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+.store-diff-store { text-align: center; }
+.store-diff-store strong { display: block; font-size: 14px; }
+.store-diff-count { font-size: 11.5px; color: var(--text-secondary); }
+.store-diff-arrow { font-size: 20px; color: var(--accent); }
+.store-diff-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.store-diff-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-weak);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.store-diff-stat i { font-size: 20px; }
+.store-diff-stat strong { font-size: 22px; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+.store-diff-stat.added   { border-color: color-mix(in srgb, var(--success) 35%, transparent); }
+.store-diff-stat.added i, .store-diff-stat.added strong { color: var(--success); }
+.store-diff-stat.removed { border-color: color-mix(in srgb, var(--danger) 35%, transparent); }
+.store-diff-stat.removed i, .store-diff-stat.removed strong { color: var(--danger); }
+.store-diff-stat.common  { border-color: var(--border-weak); }
+.diff-legend.added { color: var(--success); font-weight: 600; }
+.diff-legend.removed { color: var(--danger); font-weight: 600; }
+.diff-legend.common { color: var(--text-secondary); font-weight: 600; }
+
+/* Cards colorées par statut de diff */
+.diff-added::before   { background: var(--success) !important; }
+.diff-removed::before { background: var(--danger) !important; }
+.diff-common::before  { background: var(--text-tertiary) !important; }
+
+/* Badge "Diff actif" dans le view-switch (rouvre le modal rapport). */
+.diff-badge {
+  background: color-mix(in srgb, var(--accent-2) 10%, transparent);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  margin-left: 8px;
+  animation: diff-badge-pulse 2s ease-in-out infinite;
+}
+@keyframes diff-badge-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-2) 30%, transparent); }
+  50%      { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent-2) 0%, transparent); }
+}
+
+/* === CODEGEN MODAL === */
+.codegen-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border-weak);
+  margin-bottom: 12px;
+}
+.codegen-tab {
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.12s, border-color 0.12s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.codegen-tab:hover { color: var(--text-primary); }
+.codegen-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.codegen-tab i { font-size: 14px; }
+.codegen-code-wrapper {
+  max-height: 50vh;
+  overflow: auto;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid var(--border-weak);
+}
+.codegen-meta {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.codegen-meta code {
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.codegen-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+.codegen-code {
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+/* === PENDING PANEL "Modifications en attente" === */
+/* Drawer latéral droit : slide-in depuis la droite, prend toute la
+   hauteur sous la toolbar. Ne couvre PAS la zone principale des cards. */
+.pending-panel {
+  position: fixed;
+  top: var(--topbar-h);
+  right: 0;
+  bottom: 0;
+  /* 480px (vs 400) pour afficher les tuples OpenFGA complets sans
+      ellipsis agressive — les sujets comme
+      `namespace:warehouse_4_1/campaigns/external_data` font ~40
+      caractères, mangés à 100px. Le coût : 80px de moins sur la zone
+      cards, acceptable car le drawer est overlay (il superpose la zone
+      principale au lieu de la décaler). */
+  width: 480px;
+  background: var(--bg-primary);
+  border-left: 1px solid var(--border-mid);
+  box-shadow: none;
+  visibility: hidden;   /* fermé : ni ombre au bord de l'écran, ni focus clavier */
+  display: flex;
+  flex-direction: column;
+  font-size: 12.5px;
+  z-index: 90;  /* sous les modales (z=200) mais au-dessus du main */
+  transform: translateX(100%);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear .25s;
+  overflow: hidden;
+}
+.pending-panel.open { transform: translateX(0); visibility: visible; box-shadow: var(--shadow-lg); transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+
+/* Bouton "fixe" pour rouvrir le drawer quand il est fermé (à droite,
+   au-dessus de la toolbar). Click = rouvre le drawer. */
+.pending-toggle {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px 0 0 8px;
+  padding: 12px 8px;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 89;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+  transition: padding 0.15s;
+}
+.pending-toggle:hover { padding-right: 12px; }
+.pending-toggle i { font-size: 16px; }
+.pending-toggle-badge {
+  background: white;
+  color: var(--accent);
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.pending-toggle.shown { display: flex; }
+
+/* Quand le drawer est ouvert, on décale la zone principale pour
+   ne pas qu'elle soit cachée. Le main a déjà un layout en grid/flex,
+   on ne touche pas — on laisse le drawer superposer (400px à droite
+   est acceptable). Si on voulait décaler : .pending-panel.open ~
+   + .main { margin-right: 400px; } — mais ça laisserait un grand vide
+   si peu de cards. On préfère l'overlay qui pousse optiquement. */
+
+.pending-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-weak);
+  background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+}
+.pending-header-title {
+  display: flex; align-items: center; gap: 8px;
+}
+.pending-header-icon { color: var(--accent); font-size: 16px; }
+.pending-header h3 {
+  font-size: 13px; font-weight: 600; margin: 0;
+  color: var(--text-primary);
+}
+.pending-count-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 20px;
+  padding: 0 6px;
+  background: var(--accent);
+  color: white;
+  border-radius: 10px;
+  font-size: 11px; font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.pending-spinner {
+  font-size: 11.5px; color: var(--text-secondary);
+  display: flex; align-items: center; gap: 4px;
+}
+.pending-spinner i { animation: pending-spin 1s linear infinite; }
+@keyframes pending-spin { to { transform: rotate(360deg); } }
+
+.pending-close {
+  width: 26px; height: 26px;
+  border: none; background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  transition: background 0.12s, color 0.12s;
+}
+.pending-close:hover { background: var(--bg-secondary); color: var(--text-primary); }
+
+.pending-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 12px;
+}
+.pending-section { margin-bottom: 10px; }
+.pending-section:last-child { margin-bottom: 0; }
+.pending-section-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.pending-kind-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 22px; height: 18px;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 11px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.pending-kind-badge.add {
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  color: var(--success);
+  border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
+}
+.pending-kind-badge.remove {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger);
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+}
+
+.pending-list {
+  list-style: none;
+  padding: 0; margin: 0;
+  display: flex; flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+/* `width: 100%` + `min-width: 100%` : la combinaison `flex: 1; min-width:
+   0` du descendant .pending-tuple shrink le min-content du <li>
+   jusqu'à la taille du bouton X (= 24px), ce qui annule stretch.
+   Forcer 100% de largeur sur l'item lui-même est le seul moyen
+   fiable de garantir que le tuple interne aura de quoi s'afficher.
+   Cause racine du bug "suppressions ne s'affichent pas dans le
+   panneau pending". */
+.pending-item {
+  display: flex; align-items: center; gap: 6px;
+  width: 100%;
+  min-width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-weak);
+  transition: background 0.12s;
+}
+.pending-item:hover { background: var(--bg-input, var(--bg-secondary)); }
+.pending-kind-dot {
+  flex-shrink: 0;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+}
+.pending-item.pending-remove .pending-kind-dot { background: var(--danger); }
+.pending-tuple {
+  flex: 1; min-width: 0;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+}
+.pending-side {
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* max-width: 180px (vs 100) : laisse 2 sections "side" + rel + flèches
+     tenir dans le panel de 480px sans ellipsis pour les OpenFGA IDs
+     courts à moyens (~30 chars). Pour les IDs très longs (>40 chars),
+     l'ellipsis prend le relais et le titre `title=` du <li>
+     (cf. pendingItemHTML ci-dessous) complète l'info au survol. */
+  max-width: 180px;
+}
+.pending-arrow { color: var(--text-tertiary); flex-shrink: 0; }
+.pending-rel {
+  color: var(--accent);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--accent-2) 10%, transparent);
+  padding: 1px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.pending-remove {
+  flex-shrink: 0;
+  width: 24px; height: 24px;
+  border: none; background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.12s, color 0.12s;
+}
+.pending-remove:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
+
+.pending-footer {
+  display: flex; gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border-weak);
+  background: var(--bg-secondary);
+}
+.pending-footer .btn { flex: 1; justify-content: center; font-size: 12.5px; }

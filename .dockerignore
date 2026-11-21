@@ -1,0 +1,10 @@
+.git
+node_modules
+tests
+docs
+examples
+charts
+*.md
+.env
+.env.*
+config.yaml

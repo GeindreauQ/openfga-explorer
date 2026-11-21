@@ -1,0 +1,169 @@
+
+replicaCount: 1
+
+image:
+  repository: openfga-explorer
+  # Laisser vide pour utiliser .Chart.AppVersion (recommandé).
+  # Override uniquement pour pointer vers un tag spécifique
+  # (ex: --set image.tag=v0.2.1-rc1).
+  tag: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# ── Connexion OpenFGA ─────────────────────────────────────────────────────────
+openfga:
+  # URL de l'instance OpenFGA accessible depuis le cluster.
+  # Le store actif n'est PAS persisté en values : il est sélectionné depuis
+  # l'UI au démarrage (premier store disponible par défaut) et modifiable
+  # à chaud via le sélecteur en barre d'outils.
+  url: "http://openfga.openfga.svc.cluster.local:8080"
+  # Bearer token (optionnel), placé dans un Secret.
+  token:
+    # Valeur en clair injectée dans un Secret géré par le chart.
+    value: ""
+    # Pour réutiliser un Secret existant à la place : renseigner son nom et la clé.
+    existingSecret: ""
+    existingSecretKey: "token"
+  # Jeton OIDC obtenu par client_credentials (OpenFGA en authn oidc), à la
+  # place de token. Activé quand tokenUrl est renseigné.
+  oidc:
+    tokenUrl: ""        # ex. https://auth.example.com/application/o/token/
+    clientId: ""
+    username: ""        # compte de service (Authentik), optionnel
+    scope: ""
+    # Secret du client et/ou mot de passe du compte de service : Secret
+    # existant (recommandé) ou valeurs en clair placées dans un Secret géré.
+    clientSecret: ""
+    password: ""
+    existingSecret: ""
+    existingSecretClientSecretKey: "client-secret"
+    existingSecretPasswordKey: "password"
+
+# Adresse d'écoute du conteneur (doit correspondre à containerPort/service).
+addr: ":8000"
+
+# ── OIDC (optionnel) ──────────────────────────────────────────────────────────
+# Quand issuerUrl est non vide, l'authentification OIDC est activée (le login
+# local reste disponible comme break-glass). Si absent, seul le login local
+# est actif.
+oidc:
+  # URL du provider OpenID Connect (Keycloak, Auth0, Okta, Google…).
+  # Note : si l'URL pointe vers une IP privée/loopback, l'Explorer refuse
+  # de démarrer sauf à définir OIDC_ALLOW_INSECURE_URL=1 (cf. values.auth
+  # ci-dessous pour propager la variable).
+  issuerUrl: ""
+  clientId: ""
+  clientSecret: ""
+  redirectUrl: ""     # doit matcher exactement l'URL enregistrée chez le provider
+  scopes: "openid,profile,email"
+  # clientSecret ci-dessus est placé dans un Secret géré ; pour un Secret
+  # existant, renseigner son nom et la clé (clientSecret est alors ignoré).
+  existingSecret: ""
+  existingSecretKey: "client-secret"
+  # Rôles d'après le claim groups (noms séparés par des virgules) : adminGroups
+  # lisent et écrivent, viewerGroups lisent seulement, les autres sont refusés.
+  # Vides : tout utilisateur OIDC est admin.
+  adminGroups: ""
+  viewerGroups: ""
+  # Supprime le compte admin local : le SSO devient la seule porte d'entrée.
+  localLoginDisabled: false
+
+# ── Auth ─────────────────────────────────────────────────────────────────────
+# Les valeurs sensibles (SESSION_SECRET, ADMIN_PASSWORD) sont dans
+# `auth.secret.*` et montées via un Secret. Les autres flags
+# (désactivation, cookies sécurisés, rate limit) sont dans la
+# ConfigMap — non sensibles.
+auth:
+  # Désactive complètement l'auth (AUTH_DISABLED=1). Réservé aux
+  # déploiements locaux / démos. La validation côté serveur refuse
+  # de démarrer si auth activée et SESSION_SECRET absent.
+  disabled: false
+  # Cookies Secure (SECURE_COOKIES=1). Doit être true derrière HTTPS.
+  secureCookies: true
+  # Rate limit sur POST /auth/local (RATE_LIMIT_PER_MIN).
+  rateLimitPerMin: 50
+  secret:
+    # HMAC pour signer les cookies de session. ≥32 caractères. Si vide
+    # ET que auth n'est pas désactivée, le Pod ne démarrera pas
+    # (Validate() échoue). Laisser vide en dev si vous voulez passer
+    # SESSION_SECRET via une autre source (downward API, etc.).
+    sessionSecret:
+      value: ""
+      existingSecret: ""
+      existingSecretKey: "session-secret"
+    # Mot de passe admin seedé au 1er boot (ADMIN_PASSWORD). Optionnel :
+    # si vide, le serveur logge un mot de passe aléatoire au démarrage.
+    adminPassword:
+      value: ""
+      existingSecret: ""
+      existingSecretKey: "admin-password"
+
+# ── Tuning (optionnel) ───────────────────────────────────────────────────────
+# Surcharge les valeurs par défaut in-code via une ConfigMap contenant
+# un fichier config.yaml. Décommentez les clés que vous voulez ajuster ;
+# les clés absentes gardent leur défaut (cf. config/defaults.go).
+tuning:
+  # session_ttl: 8h
+  # sse_max_subscribers: 100
+  # sse_channel_buffer: 16
+  # rate_limit_idle_ttl: 10m
+  # session_gc_interval: 10m
+  # session_cookie_name: openfga_explorer_session
+
+service:
+  type: ClusterIP
+  port: 8000
+  annotations: {}
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 32Mi
+  limits:
+    cpu: 250m
+    memory: 128Mi
+
+# Sondes HTTP sur l'endpoint de santé du backend.
+livenessProbe:
+  httpGet:
+    path: /api/health
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 15
+readinessProbe:
+  httpGet:
+    path: /api/health
+    port: http
+  initialDelaySeconds: 3
+  periodSeconds: 10
+
+# Contexte de sécurité aligné sur l'image distroless:nonroot (uid/gid 65532).
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+podAnnotations: {}
+podLabels: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

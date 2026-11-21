@@ -1,0 +1,32 @@
+{
+  "tuple_keys": [
+    { "user": "user:charlie", "relation": "member", "object": "network:vpn" },
+    {
+      "user": "user:alice",
+      "relation": "viewer",
+      "object": "document:internal-roadmap",
+      "condition": {
+        "name": "from_corporate_network",
+        "context": { "cidr": "10.0.0.0/8" }
+      }
+    },
+    {
+      "user": "user:bob",
+      "relation": "viewer",
+      "object": "document:internal-roadmap",
+      "condition": {
+        "name": "from_corporate_network",
+        "context": { "cidr": "192.168.1.0/24" }
+      }
+    },
+    {
+      "user": "network:vpn#member",
+      "relation": "viewer",
+      "object": "document:internal-roadmap",
+      "condition": {
+        "name": "from_corporate_network",
+        "context": { "cidr": "0.0.0.0/0" }
+      }
+    }
+  ]
+}

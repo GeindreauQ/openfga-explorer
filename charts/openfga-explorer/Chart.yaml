@@ -1,0 +1,12 @@
+apiVersion: v2
+name: openfga-explorer
+description: Explorateur et éditeur de tuples OpenFGA (backend Go + frontend statique)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - openfga
+  - authorization
+  - lakekeeper
+sources:
+  - https://github.com/GeindreauQ/openfga-explorer

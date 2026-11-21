@@ -1,0 +1,107 @@
+services:
+  postgresql:
+    image: docker.io/library/postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: authentik
+      POSTGRES_PASSWORD: authentik
+      POSTGRES_USER: authentik
+    healthcheck:
+      interval: 30s
+      retries: 5
+      start_period: 20s
+      test:
+      - CMD-SHELL
+      - pg_isready -d authentik -U authentik
+      timeout: 5s
+
+  authentik:
+    command: server
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    environment:
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: authentik
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_SECRET_KEY: changemechangemechangemechangemechangemechangeme
+      AUTHENTIK_BOOTSTRAP_PASSWORD: admin
+      # URL publique d'authentik (vue du navigateur). Sert à construire
+      # l'issuer OIDC + l'URL de discovery + la JWKS. Doit correspondre
+      # à OIDC_ISSUER_URL côté explorer (même hôte/port/slug).
+      AUTHENTIK_URL: http://localhost:9000
+    image: ghcr.io/goauthentik/server:2026.5.6
+    ports:
+    - 9000:9000
+    - 9443:9443
+    restart: unless-stopped
+    shm_size: 512mb
+    # Healthcheck via l'endpoint HTTP d'authentik. L'image authentik
+    # n'embarque pas curl/wget : on passe par python -c (urllib) qui
+    # est disponible dans le venv Python de l'image.
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request,sys; r=urllib.request.urlopen(\"http://localhost:9000/-/health/live/\",timeout=5); sys.exit(0 if r.status==200 else 1)'"]
+      interval: 30s
+      retries: 5
+      start_period: 60s
+      timeout: 10s
+    volumes:
+    - ./examples/authentik/data:/data
+    - ./examples/authentik/custom-templates:/templates
+    # Blueprints : authentik scanne /blueprints/*.yaml au démarrage.
+    - ./examples/authentik/blueprint.yaml:/blueprints/open-fga-explorer.yaml:ro
+
+  worker:
+    command: worker
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      # Le worker applique les blueprints et gère les tâches async : il
+      # ne doit pas démarrer avant que le serveur soit prêt à recevoir
+      # ses requêtes internes (sinon crash "connection refused").
+      authentik:
+        condition: service_healthy
+    environment:
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: authentik
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_SECRET_KEY: changemechangemechangemechangemechangemechangeme
+      AUTHENTIK_BOOTSTRAP_PASSWORD: admin
+      AUTHENTIK_URL: http://localhost:9000
+    image: ghcr.io/goauthentik/server:2026.5.6
+    restart: unless-stopped
+    shm_size: 512mb
+    user: root
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    - ./examples/authentik/data:/data
+    - ./examples/authentik/certs:/certs
+    - ./examples/authentik/custom-templates:/templates
+    - ./examples/authentik/blueprint.yaml:/blueprints/open-fga-explorer.yaml:ro
+
+  explorer:
+    # Override du service `explorer` défini dans docker-compose.yml.
+    # Active OIDC vers authentik. Le break-glass local reste actif
+    # (login /login en admin) grâce au merge `mergeLocalAuth` côté Go.
+    environment:
+      OIDC_ISSUER_URL: http://localhost:9000/application/o/open-fga-explorer/
+      OIDC_CLIENT_ID: openfga
+      OIDC_CLIENT_SECRET: sup3r_s3cr3t
+      OIDC_REDIRECT_URL: http://localhost:8000/auth/callback
+      OIDC_SCOPES: openid,profile,email
+      SESSION_SECRET: changemechangemechangemechangemechangemechangeme
+      # Pas de SECURE_COOKIES=1 en local : on est en HTTP. En prod,
+      # basculer à 1 et mettre HTTPS devant.
+    extra_hosts:
+      # L'explorer tourne dans son container : `localhost` y pointe sur
+      # lui-même, pas sur l'hôte. On force la résolution vers la gateway
+      # docker pour qu'il puisse faire discovery + JWKS sur l'instance
+      # authentik démarrée via port-forward (cf. AUTHENTIK_URL=localhost).
+      - "localhost:host-gateway"
+    depends_on:
+      authentik:
+        condition: service_healthy
+volumes:
+  postgresql:

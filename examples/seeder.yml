@@ -1,0 +1,22 @@
+services:
+  seeder:
+    image: node:24-alpine
+    container_name: openfga-seeder
+    working_dir: /repo/tests
+    volumes:
+      - ./tests/tools:/repo/tests/tools:ro
+      - ./examples/multi-store/store-data:/repo/examples/multi-store/store-data:ro
+      - seeder_nm:/repo/tests/node_modules
+    command:
+      - sh
+      - -c
+      - |
+          if [ ! -d node_modules/@openfga/syntax-transformer ]; then
+            npm install --no-audit --no-fund @openfga/syntax-transformer@latest @openfga/sdk@latest
+          fi &&
+          node tools/seed-examples.mjs --openfga-url=http://openfga:8080
+    depends_on:
+      - openfga
+    restart: "no"
+volumes:
+  seeder_nm:

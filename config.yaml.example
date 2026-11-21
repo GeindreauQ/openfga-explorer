@@ -1,0 +1,125 @@
+# config.yaml.example — exemple de configuration surchargeable.
+#
+# Copier ce fichier vers `config.yaml` (côte-à-côte avec docker-compose.yml)
+# puis ajuster les valeurs voulues. Le binaire Explorer le lit si le
+# flag `--config=/etc/openfga-explorer/config.yaml` est passé (cf.
+# docker-compose.yml).
+#
+# Sections :
+#   tuning : constantes numériques / durées du serveur.
+#            Chaque clé est OPTIONNELLE — sans YAML, la valeur par
+#            défaut codée en dur dans config/defaults.go s'applique.
+#   theme  : branding frontend. Le frontend fait un GET /api/config/theme
+#            au boot pour récupérer ces valeurs et les applique aux
+#            types OpenFGA. Le built-in (Hard-coded dans config/defaults.go
+#            et dupliqué côté JS) reste utilisé si la route échoue, pour
+#            ne pas casser en environnement offline.
+#
+# Toutes les variables d'environnement continuent à être lues avec une
+# priorité supérieure au YAML. Le YAML est un raccourci pour les
+# déploiements Docker/K8s qui n'aiment pas les 20 lignes d'env dans
+# le compose.
+
+tuning:
+  # Session TTL (durée avant expiration d'une session inactive).
+  session_ttl: 8h
+
+  # Timeout pour le bootstrap du store OpenFGA au démarrage
+  # (find-or-create par nom).
+  bootstrap_timeout: 15s
+
+  # Timeout pour l'init OIDC (handshake provider).
+  oidc_init_timeout: 10s
+
+  # Broker SSE : nombre max d'abonnés simultanés (au-delà, 503).
+  sse_max_subscribers: 100
+
+  # Broker SSE : taille du buffer par subscriber (events droppés si lent).
+  sse_channel_buffer: 16
+
+  # Rate limiter : durée après laquelle un bucket IP inactif est nettoyé.
+  ratelimit_idle_ttl: 10m
+
+  # Rate limiter : valeur de repli si RATE_LIMIT_PER_MIN n'est pas défini
+  # côté env. (L'env reste prioritaire.) 50 req/min/IP reste largement
+  # sous le trafic attendu pour un outil d'admin mono-équipe tout en
+  # bloquant les bruteforces naïfs.
+  ratelimit_default_per_min: 50
+
+  # Cookie name (browser-side) du cookie de session.
+  session_cookie_name: openfga_explorer_session
+
+  # Taille du token aléatoire servant d'ID de session (bytes).
+  # 32 → ~256 bits d'entropie.
+  session_token_bytes: 32
+
+theme:
+  # Entrée par nom de type OpenFGA. Une entrée peut être ajoutée/écrasée
+  # sans toucher aux autres ; les types non listés gardent leur valeur
+  # built-in.
+  types:
+    user:
+      icon: ti-user
+      bg: '#E6F1FB'
+      text: '#0C447C'
+      border: '#85B7EB'
+    organization:
+      icon: ti-building-community
+      bg: '#EFE8F4'
+      text: '#3F2A6B'
+      border: '#9F88C2'
+    team:
+      icon: ti-users
+      bg: '#F0E8E1'
+      text: '#5A2E0E'
+      border: '#C99B7A'
+    document:
+      icon: ti-file-text
+      bg: '#F4F0E5'
+      text: '#3D3514'
+      border: '#C2B170'
+    folder:
+      icon: ti-folder
+      bg: '#E5F4F0'
+      text: '#0D4A2E'
+      border: '#6FC79E'
+    network:
+      icon: ti-network
+      bg: '#E8EEF7'
+      text: '#1B365C'
+      border: '#7AA0CD'
+    plan:
+      icon: ti-license
+      bg: '#FAEEF0'
+      text: '#6B1F2E'
+      border: '#D48594'
+    feature:
+      icon: ti-star
+      bg: '#FFF6E0'
+      text: '#6B4D00'
+      border: '#D7B75A'
+    repo:
+      icon: ti-brand-git
+      bg: '#EAEEF8'
+      text: '#1B2A52'
+      border: '#7F94C7'
+
+  # Palette cyclique pour les types non listés ci-dessus (et pour
+  # distinguer visuellement les types similaires). Distribuée par hash
+  # du nom côté frontend.
+  palette:
+    - { icon: ti-circle,   bg: '#E6F1FB', text: '#0C447C', border: '#85B7EB' }
+    - { icon: ti-square,   bg: '#FBEAF0', text: '#72243E', border: '#ED93B1' }
+    - { icon: ti-triangle, bg: '#EEEDFE', text: '#3C3489', border: '#AFA9EC' }
+    - { icon: ti-diamond,  bg: '#FAEEDA', text: '#633806', border: '#EF9F27' }
+    - { icon: ti-hexagon,  bg: '#EAF3DE', text: '#27500A', border: '#97C459' }
+    - { icon: ti-octagon,  bg: '#E1F5EE', text: '#085041', border: '#5DCAA5' }
+    - { icon: ti-pentagon, bg: '#FAECE7', text: '#712B13', border: '#F0997B' }
+    - { icon: ti-star,     bg: '#E6F1FB', text: '#155366', border: '#7FC2D6' }
+
+  # Fallback pour les types inconnus du modèle courant.
+  default:
+    icon: ti-circle-dot
+    bg: '#F1EFE8'
+    text: '#444441'
+    border: '#B4B2A9'

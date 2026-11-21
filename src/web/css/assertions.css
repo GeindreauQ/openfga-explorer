@@ -1,0 +1,199 @@
+/* ─── Assertions Page ────────────────────────────────────────────── */
+
+.assertions-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.assertions-table th {
+  text-align: left;
+  padding: 8px 10px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  border-bottom: 1px solid var(--border-weak);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.assertions-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-weak);
+}
+
+.assertions-table code {
+  font-size: 12px;
+  padding: 2px 6px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+}
+
+.assertions-empty td {
+  color: var(--text-tertiary);
+  text-align: center;
+  padding: 2rem 1rem;
+  font-style: italic;
+}
+
+.assertion-expectation {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.assertion-expectation.allowed {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.assertion-expectation.denied {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+
+
+.assertion-delete-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.assertion-delete-btn:hover {
+  color: var(--danger);
+}
+
+.assertions-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-weak);
+}
+
+.assertions-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 12px;
+  font-size: 12px;
+  color: var(--text-tertiary, var(--text-tertiary));
+}
+.assertions-meta code {
+  background: color-mix(in srgb, var(--text-tertiary) 10%, transparent);
+  color: var(--text-secondary, var(--text-secondary));
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 11px;
+  cursor: help;
+}
+.assertions-meta-label {
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 10px;
+  color: var(--text-tertiary, var(--text-tertiary));
+}
+
+.assertions-explainer {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  margin: 8px 16px;
+  background: color-mix(in srgb, var(--info) 8%, transparent);
+  border-left: 3px solid var(--accent-color, var(--info));
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary, var(--text-secondary));
+}
+.assertions-explainer .ti {
+  color: var(--accent-color, var(--info));
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.assertions-section {
+  padding: 12px 16px;
+}
+
+.assertions-add-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.5fr auto auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.assertions-add-grid .form-group {
+  margin: 0;
+}
+
+.assertions-results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.assertions-results-table th {
+  text-align: left;
+  padding: 6px 8px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  border-bottom: 1px solid var(--border-weak);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.assertions-results-table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border-weak);
+}
+
+.assertions-results-table code {
+  font-size: 12px;
+}
+
+.assertions-result-pass td:last-child {
+  color: var(--success);
+}
+
+.assertions-result-fail td:last-child {
+  color: var(--danger);
+}
+
+.assertions-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.assertions-summary.all-pass {
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+  color: var(--success);
+}
+
+.assertions-summary.has-fails {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  color: var(--danger);
+}
+
+/* La page Assertions empile plusieurs blocs dans le pane gauche : ils
+   gardent leur hauteur naturelle et c'est le pane qui défile (la règle
+   générique `.audit-pane-form > div` est faite pour un seul bloc). */
+#assertions-pane-form { overflow-y: auto; }
+#assertions-pane-form > div { flex: none; overflow: visible; min-height: auto; }
+#assertions-pane-form > .assertions-toolbar { flex-direction: row; padding: 12px 16px; }
+#assertions-pane-form > .assertions-explainer { flex-direction: row; padding: 10px 14px; }
+#assertions-pane-form > .assertions-section { padding: 12px 16px; }
+.assertions-add-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.assertions-add-grid .form-group input[type="text"] { width: 100%; min-width: 0; }
+.assertions-add-grid .form-group input[type="checkbox"] { width: auto; }
